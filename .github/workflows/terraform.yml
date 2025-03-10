@@ -63,6 +63,12 @@ jobs:
           name: tfplan
           path: Tinu-taskmanager/terraform-s3-config/tfplan
 
+      - name: Terraform Apply
+        run: terraform apply --auto-approve
+        
+
+
+
 
 
 

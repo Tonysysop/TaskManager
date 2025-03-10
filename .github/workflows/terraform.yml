@@ -40,7 +40,9 @@ jobs:
           terraform providers
 
       - name: Terraform Validate
-        run: terraform validate
+        run: | 
+          terraform validate
+          terraform plan -out=tfplan
 
       - name: Terraform plan
         run: terraform plan -out=tfplan

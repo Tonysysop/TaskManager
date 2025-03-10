@@ -39,6 +39,9 @@ jobs:
           terraform version
           terraform providers
 
+      - name: Terraform Validate
+        run: terraform validate
+
 
 
 

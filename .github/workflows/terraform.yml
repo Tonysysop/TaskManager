@@ -43,10 +43,11 @@ jobs:
         run: | 
           cd Tinu-taskmanager/terraform-s3-config
           terraform validate
-          terraform plan -out=tfplan
 
       - name: Terraform plan
-        run: terraform plan -out=tfplan
+        run: |
+          cd Tinu-taskmanager/terraform-s3-config
+          terraform plan -out=tfplan
 
 
 

@@ -53,6 +53,13 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
+      # Upload Terraform plan as artifact
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v3
+        with:
+          name: taskmanager-plan
+          path: tfplan
+
 
 
 

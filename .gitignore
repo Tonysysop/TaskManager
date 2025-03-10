@@ -128,3 +128,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+Tinu-taskmanager/terraform-s3-config/.terraform.lock.hcl
+Tinu-taskmanager/terraform-s3-config/.terraform/providers/registry.terraform.io/hashicorp/aws/5.90.0/darwin_arm64/terraform-provider-aws_v5.90.0_x5
+Tinu-taskmanager/terraform-s3-config/.terraform/providers/registry.terraform.io/hashicorp/aws/5.90.0/darwin_arm64/LICENSE.txt

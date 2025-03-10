@@ -63,6 +63,7 @@ jobs:
           path: Tinu-taskmanager/terraform-s3-config/tfplan
 
       - name: Terraform Apply
+        working-directory: Tinu-taskmanager/terraform-s3-config
         run: terraform apply --auto-approve
         
 

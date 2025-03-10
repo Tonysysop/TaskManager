@@ -41,6 +41,7 @@ jobs:
 
       - name: Terraform Validate
         run: | 
+          cd Tinu-taskmanager/terraform-s3-config
           terraform validate
           terraform plan -out=tfplan
 

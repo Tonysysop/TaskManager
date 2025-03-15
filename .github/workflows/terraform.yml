@@ -72,7 +72,7 @@ jobs:
         working-directory: Tinu-taskmanager/terraform-s3-config
         run:  |
           terraform output > output.txt
-          ls-l
+          ls -la
 
       - name: Upload output artifact...
         uses: actions/upload-artifact@v4

@@ -71,7 +71,7 @@ jobs:
       - name: Save Terraform output
         working-directory: Tinu-taskmanager/terraform-s3-config
         run:  |
-          terraform output website_url > output.txt
+          terraform output > output.txt
           ls-l
 
       - name: Upload output artifact...

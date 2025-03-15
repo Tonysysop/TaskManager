@@ -70,9 +70,13 @@ jobs:
       #save output file
       - name: Save Terraform output
         working-directory: Tinu-taskmanager/terraform-s3-config
-        run:  |
-          terraform output > output.txt
-          test -f output.txt && echo "output.txt exists" || echo "output.txt does not exist"
+        run: terraform output > output.txt
+          
+
+      - name: DEBUG - check for output.txt
+        working-directory: Tinu-taskmanager/terraform-s3-config
+        run: test -f output.txt && echo "output.txt exists" || echo "output.txt does not exist"
+
 
       - name: Upload output artifact...
         uses: actions/upload-artifact@v4
@@ -80,10 +84,7 @@ jobs:
           name: output.txt
           path: Tinu-taskmanager/terraform-s3-config/output.txt
           
-      - name: DEBUG - check for output.txt
-        working-directory: Tinu-taskmanager/terraform-s3-config
-        run: ls-l
-
+      
 
 
       # Terraform Destroy

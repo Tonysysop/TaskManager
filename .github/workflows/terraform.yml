@@ -52,19 +52,32 @@ jobs:
       - name: DEBUG - check if tfplan exist 
         run: ls -la Tinu-taskmanager/terraform-s3-config
 
+   
+
       # Upload Terraform plan as artifact...
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
           path: Tinu-taskmanager/terraform-s3-config/tfplan
+          
       #Terraform Apply
       - name: Terraform Apply
         working-directory: Tinu-taskmanager/terraform-s3-config
         run: | 
           terraform apply --auto-approve
-          
 
+      #save output file
+      - name: Save Terraform output
+        run: terraform output website_url > output.txt
+
+      - name: Upload output artifact...
+        uses: actions/upload-artifact@v4
+        with:
+          name: output.txt
+          path: Tinu-taskmanager/terraform-s3-config/tfplan
+          
+      # Terraform Destroy
       - name: Terraform Destroy
         working-directory: Tinu-taskmanager/terraform-s3-config
         run: |

@@ -69,6 +69,7 @@ jobs:
 
       #save output file
       - name: Save Terraform output
+        working-directory: Tinu-taskmanager/terraform-s3-config
         run:  |
           terraform output website_url > output.txt
           ls-l

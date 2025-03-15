@@ -75,7 +75,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: output.txt
-          path: Tinu-taskmanager/terraform-s3-config/tfplan
+          path: Tinu-taskmanager/terraform-s3-config/output.txt
           
       # Terraform Destroy
       - name: Terraform Destroy

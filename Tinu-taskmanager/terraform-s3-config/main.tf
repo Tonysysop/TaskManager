@@ -32,4 +32,5 @@ resource "aws_s3_bucket_policy" "React_bucket_policy" {
   policy = templatefile("./bucket_policy.json",{
     bucket_name=aws_s3_bucket.React_bucket.id
   })
+  depends_on = [ aws_s3_bucket_public_access_block.React_bucket_Acl ]
 }

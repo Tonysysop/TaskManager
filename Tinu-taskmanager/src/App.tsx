@@ -1,4 +1,4 @@
-import React from 'react'
+
 import TaskForm from './components/TaskForm'
 import TaskColumn from './components/TaskColumn'
 import TodoIcon from "./assets/direct-hit.png"

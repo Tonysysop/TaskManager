@@ -69,7 +69,9 @@ jobs:
 
       #save output file
       - name: Save Terraform output
-        run: terraform output website_url > output.txt
+        run:  |
+          terraform output website_url > output.txt
+          ls-l
 
       - name: Upload output artifact...
         uses: actions/upload-artifact@v4
@@ -77,6 +79,12 @@ jobs:
           name: output.txt
           path: Tinu-taskmanager/terraform-s3-config/output.txt
           
+      - name: DEBUG - check for output.txt
+        working-directory: Tinu-taskmanager/terraform-s3-config
+        run: ls-l
+
+
+
       # Terraform Destroy
       - name: Terraform Destroy
         working-directory: Tinu-taskmanager/terraform-s3-config

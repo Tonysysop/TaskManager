@@ -5,97 +5,104 @@ on:
       - terraform_branch
 
 jobs:
-  # terraform:
-  #   runs-on: ubuntu-latest
+  terraform:
+    runs-on: ubuntu-latest
+    outputs:
+      bucket_name: ${{ steps.get-bucket.outputs.bucket_name }} # Output for later jobs
 
-  #   # Enable debug logging
-  #   env:
-  #     TF_LOG: DEBUG
-  #     TF_LOG_PATH: terraform.log
-  #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #     AWS_REGION: ${{ secrets.AWS_REGION }}
+    # Enable debug logging
+    env:
+      TF_LOG: DEBUG
+      TF_LOG_PATH: terraform.log
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
 
 
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v3
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-  #     - name: Setup Terraform
-  #       uses: hashicorp/setup-terraform@v2
-  #       with:
-  #         terraform_version: "1.11.1"
-  #         terraform_wrapper: false
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.11.1"
+          terraform_wrapper: false
 
-  #     # verifying aws credentions 
-  #     - name: Setup and verify Aws Credentials
-  #       run: |
-  #         aws sts get-caller-identity
+      # verifying aws credentions 
+      - name: Setup and verify Aws Credentials
+        run: |
+          aws sts get-caller-identity
 
-  #     # Initiliazing terraform
-  #     - name: Terraform Init
-  #       working-directory: Tinu-taskmanager/terraform-s3-config
-  #       run: |
-  #         terraform init -input=false
-  #         terraform version
-  #         terraform providers
-  #     #validating terraform config
-  #     - name: Terraform Validate
-  #       working-directory: Tinu-taskmanager/terraform-s3-config
-  #       run: terraform validate
+      # Initiliazing terraform
+      - name: Terraform Init
+        working-directory: Tinu-taskmanager/terraform-s3-config
+        run: |
+          terraform init -input=false
+          terraform version
+          terraform providers
+      #validating terraform config
+      - name: Terraform Validate
+        working-directory: Tinu-taskmanager/terraform-s3-config
+        run: terraform validate
           
-  #     #terraform Plan
-  #     - name: Terraform plan
-  #       working-directory: Tinu-taskmanager/terraform-s3-config
-  #       run: terraform plan -out=tfplan
+      #terraform Plan
+      - name: Terraform plan
+        working-directory: Tinu-taskmanager/terraform-s3-config
+        run: terraform plan -out=tfplan
       
-  #     - name: DEBUG - check if tfplan exist 
-  #       run: ls -la Tinu-taskmanager/terraform-s3-config
+      - name: DEBUG - check if tfplan exist 
+        run: ls -la Tinu-taskmanager/terraform-s3-config
 
-   
 
-  #     # Upload Terraform plan as artifact...
-  #     - name: Upload Terraform Plan
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: tfplan
-  #         path: Tinu-taskmanager/terraform-s3-config/tfplan
+      # Upload Terraform plan as artifact...
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: Tinu-taskmanager/terraform-s3-config/tfplan
           
-  #     #Terraform Apply
-  #     - name: Terraform Apply
-  #       working-directory: Tinu-taskmanager/terraform-s3-config
-  #       run: | 
-  #         terraform apply --auto-approve
+      #Terraform Apply
+      - name: Terraform Apply
+        working-directory: Tinu-taskmanager/terraform-s3-config
+        run: | 
+          terraform apply --auto-approve
 
-  #     #save output file
-  #     - name: Save Terraform output
-  #       working-directory: Tinu-taskmanager/terraform-s3-config
-  #       run: terraform output > output.txt
+      #save output file
+      - name: Save Terraform output
+        working-directory: Tinu-taskmanager/terraform-s3-config
+        run: terraform output > output.txt
           
 
-  #     - name: DEBUG - check for output.txt
-  #       working-directory: Tinu-taskmanager/terraform-s3-config
-  #       run: test -f output.txt && echo "output.txt exists" || echo "output.txt does not exist"
+      - name: DEBUG - check for output.txt
+        working-directory: Tinu-taskmanager/terraform-s3-config
+        run: test -f output.txt && echo "output.txt exists" || echo "output.txt does not exist"
 
 
-  #     - name: Upload output artifact...
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: output.txt
-  #         path: Tinu-taskmanager/terraform-s3-config/output.txt
+      - name: Upload output artifact...
+        uses: actions/upload-artifact@v4
+        with:
+          name: output.txt
+          path: Tinu-taskmanager/terraform-s3-config/output.txt
+
+      - name: Get s3-Bucket-Name
+        id: get-bucket
+        working-directory: Tinu-taskmanager/terraform-s3-config
+        run: echo "bucket_name=$(terraform output -raw bucket_name)" >> $GITHUB_OUTPUT
           
       
 
 
-  #     # Terraform Destroy
-  #     - name: Terraform Destroy
-  #       working-directory: Tinu-taskmanager/terraform-s3-config
-  #       run: |
-  #         sleep 2m
-  #         terraform destroy --auto-approve
+      # # Terraform Destroy
+      # - name: Terraform Destroy
+      #   working-directory: Tinu-taskmanager/terraform-s3-config
+      #   run: |
+      #     sleep 2m
+      #     terraform destroy --auto-approve
         
   Build_react_app:
     runs-on: ubuntu-latest
+    needs: terraform
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -113,12 +120,40 @@ jobs:
               npm ci
               npm run build -- --outDir Taskmanager-build
 
+        #verifying aws credentions 
+        - name: Setup and verify Aws Credentials
+          run: |
+            aws sts get-caller-identity
+
 
         - name: Saving build artifact
           uses: actions/upload-artifact@v4
           with:
             name: Taskmanager-build
-            path: Tinu-taskmanager
+            path: Tinu-taskmanager/Taskmanager-build
+
+        - name: Debug S3 Bucket Name
+          run: echo "Bucket Name is $BUCKET_NAME"
+          env:
+              BUCKET_NAME: ${{ needs.terraform.outputs.bucket_name }}
+
+        - name: Download build artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: Taskmanager-build
+            path: Tinu-taskmanager/Taskmanager-build  
+
+        # Debugging the build folder
+        - name: Debug Build Folder
+          run: ls -la Tinu-taskmanager/Taskmanager-build
+
+
+        - name: Upload build to s3
+          working-directory: Tinu-taskmanager
+          run: aws s3 cp Taskmanager-build s3://$BUCKET_NAME --recursive
+          env:
+            BUCKET_NAME: ${{ needs.terraform.outputs.bucket_name }}
+
 
         
         

@@ -1,5 +1,5 @@
 variable "bucket_name" {
   description = "Bucket "
   type = string
-  default = "taskmanager21267825" 
+  default = "taskmanager007" 
 }

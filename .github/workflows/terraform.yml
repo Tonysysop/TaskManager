@@ -61,7 +61,15 @@ jobs:
       #Terraform Apply
       - name: Terraform Apply
         working-directory: Tinu-taskmanager/terraform-s3-config
-        run: terraform apply --auto-approve
+        run: | 
+          terraform apply --auto-approve
+          
+
+      - name: Terraform Destroy
+        working-directory: Tinu-taskmanager/terraform-s3-config
+        run: |
+          sleep 2m
+          terraform destroy --auto-approve
         
         
 

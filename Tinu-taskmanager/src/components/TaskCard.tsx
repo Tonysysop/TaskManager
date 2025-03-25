@@ -1,4 +1,4 @@
-import React from 'react'
+
 import Tag from '@/components/Tag'
 import DeleteIcon from '../assets/delete.png'
 

@@ -1,4 +1,4 @@
-import React from 'react'
+
 import TaskCard from '@/components/TaskCard';
 
 const TaskColumn = ({icon, columnName}:{ icon: string; columnName: string }) => {

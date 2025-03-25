@@ -4,3 +4,6 @@ output "Website_url" {
   depends_on = [ aws_s3_bucket_website_configuration.React_Bucket_website_confg ]
 }
 
+output "bucket_name" {
+  value = aws_s3_bucket.React_bucket.bucket
+}

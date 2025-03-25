@@ -1,0 +1,52 @@
+name: Build and ship App
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Build_react_app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # verifying aws credentions
+      - name: Setup and verify Aws Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION}}
+
+      - name: Testing Aws cli
+        run: aws sts get-caller-identity
+
+      - name: Install dependencies and build
+        working-directory: Tinu-taskmanager
+        run: |
+          npm ci
+          npm run build -- --outDir Taskmanager-build
+
+############Saving build Artifiact 
+      - name: Saving build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Taskmanager-build
+          path: Tinu-taskmanager/Taskmanager-build
+
+##Download artifact 
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Taskmanager-build
+          path: Tinu-taskmanager/Taskmanager-build
+
+      - name: Consume "$BUCKET_NAME" env from infra repo
+        run: echo "BUCKET_NAME=${{ vars.BUCKET_NAME }}" >> GITHUB_ENV
+### Upload Build to s3
+      - name: Upload build to s3
+        working-directory: Tinu-taskmanager
+        run: aws s3 cp Taskmanager-build s3://$BUCKET_NAME --recursive
+        

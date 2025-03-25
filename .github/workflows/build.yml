@@ -44,7 +44,7 @@ jobs:
           path: Tinu-taskmanager/Taskmanager-build
 
       - name: Consume "$BUCKET_NAME" env from infra repo
-        run: echo "BUCKET_NAME=${{ vars.BUCKET_NAME }}" >> GITHUB_ENV
+        run: echo "BUCKET_NAME=${{ vars.BUCKET_NAME }}" >> $GITHUB_ENV
 ### Upload Build to s3
       - name: Upload build to s3
         working-directory: Tinu-taskmanager

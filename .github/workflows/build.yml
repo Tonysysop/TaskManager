@@ -1,8 +1,8 @@
 name: Build and ship App
 on:
-  push:
-    branches:
-      - main
+  repository_dispatch:
+    types: [terraform-completed] #trigger by the successful execution of terraform workflow
+
 
 jobs:
   Build_react_app:

@@ -1,8 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
+
+@keyframes slideInFromBottomRight {
+  0% {
+    transform: translateX(100%) translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-in {
+  animation: slideInFromBottomRight 0.3s ease-out forwards;
+}
+
+body{
+  font-family: "Montserrat", sans-serif;
+}
+
+
 
 /* :root {
   --background: oklch(1 0 0);

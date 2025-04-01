@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TaskForm from "./components/TaskForm";
 import TaskColumn from "./components/TaskColumn";
 import TodoIcon from "./assets/direct-hit.png";
@@ -12,13 +12,23 @@ interface TaskComponent {
 }
 
 const App = () => {
-  const [tasks, setTasks] = useState<TaskComponent[]>([]);
-  console.log("tasks", tasks);
+  const [tasks, setTasks] = useState<TaskComponent[]>(() => {
+    const savedTasks = localStorage.getItem("task");
+    return savedTasks ? JSON.parse(savedTasks) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("task", JSON.stringify(tasks));
+  }, [tasks]);
 
   const handleDelete = (taskIndex: number, status: string) => {
-    const filteredTasks = tasks.filter((task) => task.status === status);
+    const filteredTasks = tasks.filter(
+      (task: TaskComponent) => task.status === status
+    );
     const taskToDelete = filteredTasks[taskIndex];
-    const newTasks = tasks.filter((task) => task !== taskToDelete);
+    const newTasks = tasks.filter(
+      (task: TaskComponent) => task !== taskToDelete
+    );
     setTasks(newTasks);
   };
 
@@ -29,21 +39,21 @@ const App = () => {
         <TaskColumn
           columnName="Todo"
           icon={TodoIcon}
-          tasks={tasks.filter((task) => task.status === "Todo")}
+          tasks={tasks.filter((task: TaskComponent) => task.status === "Todo")}
           handleDelete={(index) => handleDelete(index, "Todo")}
         />
 
         <TaskColumn
           columnName="Doing"
           icon={DoingIcon}
-          tasks={tasks.filter((task) => task.status === "Doing")}
+          tasks={tasks.filter((task: TaskComponent) => task.status === "Doing")}
           handleDelete={(index) => handleDelete(index, "Doing")}
         />
 
         <TaskColumn
           columnName="Done"
           icon={DoneIcon}
-          tasks={tasks.filter((task) => task.status === "Done")}
+          tasks={tasks.filter((task: TaskComponent) => task.status === "Done")}
           handleDelete={(index) => handleDelete(index, "Done")}
         />
       </main>

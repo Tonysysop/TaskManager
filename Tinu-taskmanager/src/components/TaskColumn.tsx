@@ -1,7 +1,6 @@
 // import React from 'react'
 // import TaskCard from '@/components/TaskCard';
 
-
 // // Define the Task type
 // interface TaskComponent {
 //   task: string;
@@ -20,13 +19,12 @@
 //     <section className='w-1/3  m-5'>
 //         <h2 className='flex items-center font-bold'>
 //             <img className='w-[30px] mr-[5px]' src={icon} alt="" /> {columnName}
-//         </h2> {/*Task_column_heading and task_column icon*/} 
-
+//         </h2> {/*Task_column_heading and task_column icon*/}
 
 //         {tasks.map(
-//           (task, index) => 
+//           (task, index) =>
 //             <TaskCard
-//               key={index} 
+//               key={index}
 //               columnName = {task.task}
 //               tags={task.tags}
 //              />
@@ -37,11 +35,8 @@
 
 // export default TaskColumn
 
-
-
-
-import React from 'react'
-import TaskCard from '@/components/TaskCard';
+import React from "react";
+import TaskCard from "@/components/TaskCard";
 
 // Define the Task type
 interface TaskComponent {
@@ -54,23 +49,31 @@ interface TaskColumnProps {
   icon: string;
   columnName: string;
   tasks: TaskComponent[]; // Ensure tasks is an array
+  handleDelete: (index: number) => void;
 }
 
-const TaskColumn: React.FC<TaskColumnProps> = ({ icon, columnName, tasks }) => {
+const TaskColumn: React.FC<TaskColumnProps> = ({
+  icon,
+  columnName,
+  tasks,
+  handleDelete,
+}) => {
   return (
-    <section className='w-1/3 m-5'>
-        <h2 className='flex items-center font-bold'>
-            <img className='w-[30px] mr-[5px]' src={icon} alt="" /> {columnName}
-        </h2> 
+    <section className="w-1/3 m-5">
+      <h2 className="flex items-center font-bold">
+        <img className="w-[30px] mr-[5px]" src={icon} alt="" /> {columnName}
+      </h2>
 
-        {tasks.map((task, index) => (
-          <TaskCard 
-            key={index} 
-            task={task} // ✅ Pass the entire task object
-          />
-        ))}
+      {tasks.map((task, index) => (
+        <TaskCard
+          key={index}
+          task={task} // ✅ Pass the entire task object
+          handleDelete={handleDelete}
+          index={index}
+        />
+      ))}
     </section>
-  )
-}
+  );
+};
 
-export default TaskColumn
+export default TaskColumn;

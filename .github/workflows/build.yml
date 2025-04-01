@@ -1,8 +1,8 @@
 name: Build and ship App
 on:
   workflow_dispatch: 
-  repository_dispatch:
-    types: [terraform-completed] #trigger by the successful execution of terraform workflow
+  # repository_dispatch:
+  #   types: [terraform-completed] #trigger by the successful execution of terraform workflow
 
 
 jobs:

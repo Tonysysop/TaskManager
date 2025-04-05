@@ -4,6 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Tag from "@/components/Tag";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+// Zod Schema for task input
+const taskInputSchema = z.object({
+  taskTitle: z
+    .string()
+    .min(2, "Task Title must be at least 2 characters long")
+    .max(100, "Task is too long"),
+});
+
+type TaskInputForm = z.infer<typeof taskInputSchema>;
 
 // Define the type for a single task
 interface TaskComponents {
@@ -26,59 +39,53 @@ const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
 
   const [error, setError] = useState<string | null>(null); // Error state
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setTaskData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setError(null); // Clear error when typing
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<TaskInputForm>({
+    resolver: zodResolver(taskInputSchema),
+  });
 
-  const handleStatusChange = (value: string) => {
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setTaskData((prev) => ({
       ...prev,
-      status: value,
+      status: e.target.value,
     }));
     setError(null); // Clear error when status is selected
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit = (data: TaskInputForm) => {
     if (!taskData.status) {
       setError("Please select a task category before adding a task.");
       return;
     }
 
-    setTasks((prev) => [...prev, taskData]); // Append new task correctly
-    setTaskData({ task: "", status: "", tags: [] }); // Clear form
-    console.log(taskData);
+    setTasks((prev) => [...prev, { ...taskData, task: data.taskTitle }]);
+    setTaskData({ task: "", status: "", tags: [] });
+    reset(); // Reset form state
   };
 
   const selectTag = (tag: string) => {
-    if (taskData.tags.some((item) => item === tag)) {
-      const filterTags = taskData.tags.filter((item) => item !== tag);
-      setTaskData((prev) => {
-        return { ...prev, tags: filterTags };
-      });
+    if (taskData.tags.includes(tag)) {
+      setTaskData((prev) => ({
+        ...prev,
+        tags: prev.tags.filter((item) => item !== tag),
+      }));
     } else {
-      setTaskData((prev) => {
-        return { ...prev, tags: [...prev.tags, tag] };
-      });
+      setTaskData((prev) => ({
+        ...prev,
+        tags: [...prev.tags, tag],
+      }));
     }
   };
 
   const checkTag = (tag: string): boolean => taskData.tags.includes(tag);
 
-  // const checkTag = (tag:string):boolean => {
-  //     return taskData.tags.some(item => item === tag)
-  // }
-
   return (
     <header className="flex items-center justify-center border-b border-gray-300">
-      {" "}
-      {/*App_header*/}
-      <form onSubmit={handleSubmit} className="w-[40%]">
+      <form onSubmit={handleSubmit(onSubmit)} className="w-[40%]">
         {error && (
           <Alert
             variant="destructive"
@@ -92,15 +99,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
         <Input
           className="text-lg font-medium bg-gray-100 text-black border border-gray-300 rounded-md px-3 py-2 mb-4 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder="Enter your task"
-          onChange={handleChange}
-          value={taskData.task}
-          name="task"
+          {...register("taskTitle")} // Register the taskTitle field for react-hook-form
         />
-        {/*task_input*/}
+        {errors.taskTitle && (
+          <p className="text-red-500 text-sm mb-2">{errors.taskTitle.message}</p>
+        )}
 
         <div className="flex items-center justify-between">
-          {" "}
-          {/*task_form_bottom_line*/}
           <div>
             <Tag
               tagName="Personal"
@@ -123,10 +128,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
               selected={checkTag("School")}
             />
           </div>
-          <div className="flex items-center>">
+          <div className="flex items-center">
             <select
               className="text-sm font-medium border border-gray-500 rounded-md w-[130px] h-[40px] px-1"
-              onChange={(e) => handleStatusChange(e.target.value)}
+              onChange={handleStatusChange} // Use react-hook-form register
               value={taskData.status}
             >
               <option className="text-gray-500 opacity-20" value="" disabled>
@@ -134,16 +139,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
               </option>
               <option value="Todo">Todo</option>
               <option value="Doing">Doing</option>
-              <option value="Done">Done</option> {/*task_status*/}
+              <option value="Done">Done</option>
             </select>
             <Button
               className="text-base font-medium bg-indigo-600 text-white rounded-md h-10 px-3.5 ml-2.5 border-none cursor-pointer"
               type="submit"
             >
-              {" "}
-              + Add Task{" "}
-            </Button>{" "}
-            {/*task_submit*/}
+              + Add Task
+            </Button>
           </div>
         </div>
       </form>

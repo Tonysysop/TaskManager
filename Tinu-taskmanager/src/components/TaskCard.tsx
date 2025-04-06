@@ -64,7 +64,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   task,
   handleDelete,
   setActiveCard,
-  index, // Keep index if needed for the key in TaskColumn or other reasons
+  //index, // Keep index if needed for the key in TaskColumn or other reasons
 }) => {
   const handleDragStart = () => {
     // Set the actual task object as active
@@ -107,7 +107,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
           <p className="text-left text-xs font-medium bg-gray-100 border border-gray-300 rounded-md px-2 w-fit">
             Created : {new Date(task.date).toLocaleDateString()}
           </p>
-          
         </div>
 
         <div

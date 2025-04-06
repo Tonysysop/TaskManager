@@ -19,22 +19,24 @@ const taskInputSchema = z.object({
 type TaskInputForm = z.infer<typeof taskInputSchema>;
 
 // Define the type for a single task
-interface TaskComponents {
+interface TaskComponent {
   task: string;
   status: string;
   tags: string[];
+  date: string;
 }
 
 // Define props type
 interface TaskFormProps {
-  setTasks: React.Dispatch<React.SetStateAction<TaskComponents[]>>;
+  setTasks: React.Dispatch<React.SetStateAction<TaskComponent[]>>;
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
-  const [taskData, setTaskData] = useState<TaskComponents>({
+  const [taskData, setTaskData] = useState<TaskComponent>({
     task: "",
     status: "",
     tags: [] as string[],
+    date: new Date().toISOString(),
   });
 
   const [error, setError] = useState<string | null>(null); // Error state
@@ -63,7 +65,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
     }
 
     setTasks((prev) => [...prev, { ...taskData, task: data.taskTitle }]);
-    setTaskData({ task: "", status: "", tags: [] });
+    setTaskData({
+      task: "",
+      status: "",
+      tags: [],
+      date: new Date().toISOString(),
+    });
     reset(); // Reset form state
   };
 
@@ -84,7 +91,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
   const checkTag = (tag: string): boolean => taskData.tags.includes(tag);
 
   return (
-    <header className="flex items-center justify-center border-b border-gray-300">
+    <header className="flex items-center justify-center border-b border-gray-300 ">
       <form onSubmit={handleSubmit(onSubmit)} className="w-[40%]">
         {error && (
           <Alert
@@ -97,12 +104,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
           </Alert>
         )}
         <Input
-          className="text-lg font-medium bg-gray-100 text-black border border-gray-300 rounded-md px-3 py-2 mb-4 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="text-lg font-medium bg-gray-100 text-black border border-gray-300 rounded-md px-3 py-2 mb-4 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-6"
           placeholder="Enter your task"
           {...register("taskTitle")} // Register the taskTitle field for react-hook-form
         />
         {errors.taskTitle && (
-          <p className="text-red-500 text-sm mb-2">{errors.taskTitle.message}</p>
+          <p className="text-red-500 text-sm mb-2">
+            {errors.taskTitle.message}
+          </p>
         )}
 
         <div className="flex items-center justify-between">
@@ -128,7 +137,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
               selected={checkTag("School")}
             />
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center mb-6">
             <select
               className="text-sm font-medium border border-gray-500 rounded-md w-[130px] h-[40px] px-1"
               onChange={handleStatusChange} // Use react-hook-form register

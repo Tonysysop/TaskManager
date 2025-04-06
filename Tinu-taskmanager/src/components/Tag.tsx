@@ -24,7 +24,7 @@ const Tag: React.FC<TagProps> = ({ tagName, selectTag, selected}) => {
     
     <Button 
       type='button' 
-      className='text-xs font-medium bg-gray-100 border border-gray-300 rounded-md px-2.5 py-0.5 mr-2 cursor-pointer' 
+      className='text-xs font-sans bg-gray-100 border border-gray-300 rounded-md px-2 py-0.5 mr-1 cursor-pointer mb-2' 
       style={selected ? tagStyle[tagName] : tagStyle.default}
       onClick={() => selectTag(tagName)}>
       {tagName}

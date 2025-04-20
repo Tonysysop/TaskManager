@@ -1,12 +1,24 @@
 import React, { useState } from "react";
-import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Tag from "@/components/Tag";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { signOut } from "@aws-amplify/auth";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { AnimatedInput } from "./ui/new-input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 // Zod Schema for task input
 const taskInputSchema = z.object({
@@ -35,43 +47,51 @@ const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
   const [taskData, setTaskData] = useState<TaskComponent>({
     task: "",
     status: "",
-    tags: [] as string[],
+    tags: [],
     date: new Date().toISOString(),
   });
+  const placeholders = [
+  "Add a new task...",
+  "What do you want to do?",
+  "Enter your goal here...",
+  ];
 
-  const [error, setError] = useState<string | null>(null); // Error state
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
     reset,
   } = useForm<TaskInputForm>({
+    mode:"onChange",
     resolver: zodResolver(taskInputSchema),
   });
+
+  const watchedTitle = watch("taskTitle", "");
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setTaskData((prev) => ({
       ...prev,
       status: e.target.value,
     }));
-    setError(null); // Clear error when status is selected
   };
 
   const onSubmit = (data: TaskInputForm) => {
-    if (!taskData.status) {
-      setError("Please select a task category before adding a task.");
-      return;
-    }
+    setLoading(true);
 
     setTasks((prev) => [...prev, { ...taskData, task: data.taskTitle }]);
+
     setTaskData({
       task: "",
       status: "",
       tags: [],
       date: new Date().toISOString(),
     });
-    reset(); // Reset form state
+
+    reset();
+    setLoading(false);
   };
 
   const selectTag = (tag: string) => {
@@ -90,71 +110,86 @@ const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
 
   const checkTag = (tag: string): boolean => taskData.tags.includes(tag);
 
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
-    <header className="flex items-center justify-center border-b border-gray-300 ">
-      <form onSubmit={handleSubmit(onSubmit)} className="w-[40%]">
-        {error && (
-          <Alert
-            variant="destructive"
-            className="mb-4 slide-in absolute bottom-4 right-4 z-50 text-red-600 max-w-md"
-          >
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        <Input
-          className="text-lg font-medium bg-gray-100 text-black border border-gray-300 rounded-md px-3 py-2 mb-4 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-6"
-          placeholder="Enter your task"
-          {...register("taskTitle")} // Register the taskTitle field for react-hook-form
-        />
+    <header className="flex items-center justify-center border-b border-gray-300">
+      <form onSubmit={handleSubmit(onSubmit)} className="w-[40%] relative">
+
+        <AnimatedInput
+          className="px-3 py-2 mb-4 w-full mt-6 rounded-full"
+          placeholders={placeholders}
+          interval={4500}
+          {...register("taskTitle")}
+          value={watchedTitle}
+        /> 
+        
+      
+
         {errors.taskTitle && (
-          <p className="text-red-500 text-sm mb-2">
-            {errors.taskTitle.message}
-          </p>
+          <p className="text-red-500 text-xs mb-2">{errors.taskTitle.message}</p>
         )}
 
-        <div className="flex items-center justify-between">
-          <div>
-            <Tag
-              tagName="Personal"
-              selectTag={selectTag}
-              selected={checkTag("Personal")}
-            />
-            <Tag
-              tagName="Others"
-              selectTag={selectTag}
-              selected={checkTag("Others")}
-            />
-            <Tag
-              tagName="Household"
-              selectTag={selectTag}
-              selected={checkTag("Household")}
-            />
-            <Tag
-              tagName="School"
-              selectTag={selectTag}
-              selected={checkTag("School")}
-            />
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-6 mt-2">
+          <div className="flex flex-wrap gap-1">
+            {["Personal", "Others", "Household", "School"].map((tag) => (
+              <Tag
+                key={tag}
+                tagName={tag}
+                selectTag={selectTag}
+                selected={checkTag(tag)}
+              />
+            ))}
           </div>
-          <div className="flex items-center mb-6">
-            <select
-              className="text-sm font-medium border border-gray-500 rounded-md w-[130px] h-[40px] px-1"
-              onChange={handleStatusChange} // Use react-hook-form register
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Select
+              onValueChange={(value) =>
+              setTaskData((prev) => ({ ...prev, status: value }))
+              }
               value={taskData.status}
             >
-              <option className="text-gray-500 opacity-20" value="" disabled>
-                Category
-              </option>
-              <option value="Todo">Todo</option>
-              <option value="Doing">Doing</option>
-              <option value="Done">Done</option>
-            </select>
+              <SelectTrigger className="w-[120px] px-2 py-0.5 mr-6 mb-2">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Todo">Todo</SelectItem>
+                <SelectItem value="Doing">Doing</SelectItem>
+                <SelectItem value="Done">Done</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      className="text-sm  bg-indigo-600 text-white rounded-md h-8 px-3.5 ml-2.5 mr-1 mb-2 border-none cursor-pointer disabled:opacity-50"
+                      type="submit"
+                      disabled={!taskData.status || loading}
+                    >
+                      {loading ? "Adding..." : "+ Add Task"}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!taskData.status && (
+                  <TooltipContent>
+                    <p>Select a category first</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+
+
             <Button
-              className="text-base font-medium bg-indigo-600 text-white rounded-md h-10 px-3.5 ml-2.5 border-none cursor-pointer"
-              type="submit"
+              size="sm"
+              variant="destructive"
+              className="text-sm  text-white rounded-md h-8 px-3.5  mb-2  border-none cursor-pointer"
+              onClick={handleSignOut}
             >
-              + Add Task
+              Logout
             </Button>
           </div>
         </div>

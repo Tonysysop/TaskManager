@@ -100,6 +100,8 @@ interface TaskComponent {
   status: string;
   tags: string[];
   date:string
+  priority?:string
+
   // id?: string | number;
 }
 
@@ -122,7 +124,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
   onDrop,
 }) => {
   return (
-    <section className="w-full md:w-1/3 m-2 p-4 bg-gray-50 rounded-lg shadow">
+    <section className="w-full md:w-1/3 m-2 p-4 bg-[var(--color-card)] text-[var(--color-card-foreground)] rounded-lg shadow">
       {" "}
       {/* Added styling */}
       <h2 className="flex items-center font-bold mb-4 text-xl">

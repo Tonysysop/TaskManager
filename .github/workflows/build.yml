@@ -3,6 +3,9 @@ on:
   workflow_dispatch: 
   # repository_dispatch:
   #   types: [terraform-completed] #trigger by the successful execution of terraform workflow
+  push: 
+    branches:
+      - main
 
 
 jobs:
@@ -50,4 +53,26 @@ jobs:
       - name: Upload build to s3
         working-directory: Tinu-taskmanager
         run: aws s3 sync Taskmanager-build s3://$BUCKET_NAME --delete
+
+### Notification
+      - name: Send success email via Mailgun
+        if: success()
+        run: |
+          curl -s --user "api:${{ secrets.MAILGUN_API_KEY }}" \
+          https://api.mailgun.net/v3/${{ secrets.MAILGUN_DOMAIN }}/messages \
+          -F from="${{ secrets.MAILGUN_FROM_EMAIL }}" \
+          -F to=${{ secrets.MAILGUN_TO_EMAIL }} \
+          -F subject="✅ TinuTaskmanager Build & Deploy Succeeded" \
+          -F text="The GitHub Actions workflow completed successfully. The app has been deployed to S3."
+
+      - name: Send failure email via Mailgun
+        if: failure()
+        run: |
+          curl -s --user "api:${{ secrets.MAILGUN_API_KEY }}" \
+          https://api.mailgun.net/v3/${{ secrets.MAILGUN_DOMAIN }}/messages \
+          -F from="${{ secrets.MAILGUN_FROM_EMAIL }}" \
+          -F to=${{ secrets.MAILGUN_TO_EMAIL }} \
+          -F subject="❌ TinuTaskmanager Build or Deploy Failed" \
+          -F text="The GitHub Actions workflow failed. Please check the logs for more details."
+
         

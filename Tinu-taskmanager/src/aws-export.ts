@@ -1,4 +1,4 @@
-import { Amplify } from "aws-amplify";
+//import { Amplify } from "aws-amplify";
 import type { ResourcesConfig } from "aws-amplify";
 
 const awsConfig: ResourcesConfig = {

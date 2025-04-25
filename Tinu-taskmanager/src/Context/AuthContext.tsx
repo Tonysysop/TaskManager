@@ -3,12 +3,16 @@
 import { Hub } from 'aws-amplify/utils';
 import React, { createContext, useContext, useEffect, useState } from "react";
 // 👇 Import AuthTokens type if available (check your Amplify version)
-import { fetchAuthSession, FetchAuthSessionOptions } from "aws-amplify/auth";
+import { fetchAuthSession, } from "aws-amplify/auth";
 // If AuthTokens isn't available, you might need to rely on checking session.tokens?.idToken etc.
-
+interface UserInfo {
+  name: string;
+  email: string;
+}
 interface AuthContextProps {
   isAuthenticated: boolean;
   loading: boolean;
+  user: UserInfo | null;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -16,6 +20,7 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<UserInfo | null>(null);
 
   const checkAuthStatus = async () => {
     console.log("AuthProvider: Starting initial checkAuthStatus...");
@@ -36,6 +41,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // often handles basic expiration checks internally when fetching/using tokens.
         console.log("AuthProvider: Valid tokens found. Setting isAuthenticated = true");
         setIsAuthenticated(true);
+
+        const name = String(idToken.payload.name) || "User";
+        const email = String(idToken.payload.email) || "";
+
+        console.log("AuthProvider: Extracted user info →", { name, email });
+
+        setUser({
+          name,
+          email
+        })
+        
       } else {
         // fetchAuthSession succeeded but didn't return expected tokens. Treat as not authenticated.
         console.log("AuthProvider: fetchAuthSession succeeded but tokens missing. Setting isAuthenticated = false");
@@ -65,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // ... your cases ...
           case 'signedIn':
           case 'autoSignIn':
+            checkAuthStatus()
             setIsAuthenticated(true);
             break;
           case 'signedOut':
@@ -86,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const contextValue = {
     isAuthenticated,
     loading,
+    user
   };
 
   // Add a log here too, to see when the provider itself re-renders

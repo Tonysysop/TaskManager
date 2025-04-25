@@ -18,6 +18,11 @@ import appleIcon from "@/assets/Apple.svg";
 import { signUp } from "@aws-amplify/auth";
 import { VerifyCodeDialog } from "./Verify-code";
 import { toast } from "sonner";
+import { SlideShow } from "./Slideshow-signup";
+import TaskImage from "@/assets/TaskImage.png";
+import PomoImage from "@/assets/pomoImage.png";
+import TaskImage2 from "@/assets/TaskImage2.png";
+import HabitImage from "@/assets/HabitImage.png";
 
 // Define the validation schema
 const formSchema = z
@@ -51,6 +56,13 @@ export function SignupForm({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showVerifyDialog, setShowVerifyDialog] = useState(false);
+
+  const signUpSlides = [
+    { image: TaskImage, text: "Create Reminders and repetitions for task" },
+    { image: PomoImage, text: "Improve focus with Pomo" },
+    { image: HabitImage, text: "Check-in to cultivate good habits" },
+    { image: TaskImage2, text: "Visualize and track your progress" },
+  ];
 
   const {
     register,
@@ -102,9 +114,10 @@ export function SignupForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleSubmit(onSubmit)}>
+      <Card className="overflow-hidden p-0 flex flex-col">
+        <CardContent className="grid p-0 md:grid-cols-2 flex-1 h-full">
+
+          <form className="p-6 md:p-8 h-full" onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-2xl font-bold">Join TinuMind Inc Today</h1>
@@ -172,7 +185,7 @@ export function SignupForm({
                 </div>
                 <div className="relative">
                   <Input
-                    id="Comfirmpassword"
+                    id="comfirmpassword"
                     type={showConfirmPassword ? "text" : "password"}
                     {...register("confirmPassword")}
                   />
@@ -203,9 +216,13 @@ export function SignupForm({
                   )}
                 </div>
               </div>
-              <Button type="submit" disabled={!confirmPassword || isSubmitting}
-                  className={`w-full ${
-                  confirmPassword || isSubmitting ? '': 'bg-gray-400 text-gray-700 cursor-not-allowed'
+              <Button
+                type="submit"
+                disabled={!confirmPassword || isSubmitting}
+                className={`w-full ${
+                  confirmPassword || isSubmitting
+                    ? ""
+                    : "bg-gray-400 text-gray-700 cursor-not-allowed"
                 }`}
               >
                 {isSubmitting ? "Signing up..." : "Sign Up"}
@@ -248,13 +265,8 @@ export function SignupForm({
               </div>
             </div>
           </form>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src={tinumind}
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.9]"
-            />
-          </div>
+            <SlideShow slidesData={signUpSlides} className="w-full h-full " />
+          
         </CardContent>
       </Card>
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">

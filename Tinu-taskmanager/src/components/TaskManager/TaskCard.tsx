@@ -1,47 +1,9 @@
-// import React from 'react'
-// import Tag from '@/components/Tag'
-// import DeleteIcon from '../assets/delete.png'
 
-// // Define the Task type
-// interface Task {
-//   task: string;
-//   status: string;
-//   tags: string[];
-// }
-
-// interface TaskCardProps {
-//   task: Task; // Expect a 'task' prop
-// }
-
-// const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
-//   return (
-//     <article className='w-full min-h-[100px] border border-gray-300 rounded-lg p-4 my-4'> {/*Task_card*/}
-//         <p className='text-lg font-semibold mb-3'>{task.task}</p>{/*taskTest*/}
-
-//         <div className='flex items-center justify-between'>{/*task_card_bottom_line*/}
-//            <div>
-//                {task.tags.map((tag, index) => (
-//                   <Tag key={index} tagName={tag} />
-//                 ))}
-//            </div>{/*task_card_tag*/}
-
-//            <div className='w-[35px] h-[35px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200'>
-//                 <img className='w-[20px] opacity-50 transition-all duration-300 ease-in-out hover:opacity-80' src={DeleteIcon} alt="" /> {/*Delete icon*/}
-//            </div> {/*task_delete*/}
-//         </div>
-//     </article>
-//   )
-// }
-
-// export default TaskCard
-
-//
-
-//srccomponentsTaskCard.tsx
 import React from "react";
-import Tag from "@/components/Tag"; // Assuming Tag component path is correct
-import DeleteIcon from "../assets/delete.png";
+import Tag from "@/components/TaskManager/Tag"; // Assuming Tag component path is correct
+import { Trash2 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import { Button } from "../ui/button";
 
 
 
@@ -87,7 +49,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const exactTime = createdAt.toLocaleString(); // Example: 4/19/2025, 11:25 AM
 
   return (
-   
     <article
       className="w-full min-h-[100px] border border-border rounded-lg p-2 
                 bg-[var(--color-card)] text-[var(--color-card-foreground)] 
@@ -102,9 +63,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
 >
-   
-        
-     
 
       <p className="text-lg font-semibold mb-2">{task.task}</p>
       <div className="flex items-center justify-between">
@@ -117,6 +75,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
               tagIndex // Use different index variable 'tagIndex'
             ) => (
               <Tag
+                className="h-7 px-1.5 text-xs"
                 key={tagIndex} // Use tagIndex for key here
                 tagName={tag}
                 // Assuming selectTag and selected are handled correctly by Tag component
@@ -135,21 +94,24 @@ const TaskCard: React.FC<TaskCardProps> = ({
             "
           >
 
-            Created : {exactTime} ({relativeTime})
+            {exactTime} ({relativeTime})
           </p>
         </div>
 
         <div
-          className="w-[35px] h-[35px] rounded-full flex items-center justify-center cursor-pointer mb-2.5 transition-all duration-300 ease-in-out hover:bg-gray-200 dark:hover:bg-gray-700"
-          // --- Call handleDelete with the task object ---
-          onClick={() => handleDelete(task)}
+          className="group w-[35px] h-[35px] rounded-full flex items-center justify-center cursor-pointer mb-2.5 transition-all duration-300 ease-in-out hover:bg-gray-200 dark:hover:bg-gray-700"
+          
         >
-          <img
-            className="w-[20px] opacity-50 hover:opacity-80 transition-all duration-300 ease-in-out 
-              dark:invert dark:brightness-200"
-            src={DeleteIcon}
-            alt="Delete Task"
-          />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => handleDelete(task)}
+          className="text-gray-700 font-bold hover:text-red-500 opacity-80 group-hover:opacity-100 transition-opacity"
+
+        >
+          <Trash2 className="h-4 w-4" />
+
+        </Button>
         </div>
       </div>
     </article>

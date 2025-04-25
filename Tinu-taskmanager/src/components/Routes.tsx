@@ -7,10 +7,12 @@ import {
 } from "react-router-dom";
 import Login from "@/Pages/Login";
 import Signup from "@/Pages/Signup";
-import TinuMind from "@/Pages/TinuMind";
-import Home from "@/Pages/Home"
+import AppLayout from "@/Pages/AppLayout";
+import Home from "@/Pages/Home";
 import { ProtectedRoute } from "@/Context/ProtectedRoutes";
 import { useAuth } from "@/Context/AuthContext";
+import TasksPage from "@/components/TaskManager/TaskManager"
+import DashboardPage from "@/Pages/Dashboard";
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
@@ -23,30 +25,25 @@ function AppRoutes() {
   return (
     <Router>
       <Routes>
-          <Route
+        <Route
           path="/"
           element={
             isAuthenticated ? <Navigate to="/tinumind" replace /> : <Home />
           }
         />
         <Route
-          path="/"
+          path="/tinumind/*"
           element={
             <ProtectedRoute>
-              <TinuMind />
+              <AppLayout /> {/* contains the sidebar */}
             </ProtectedRoute>
           }
-        />
-        {/* Optional: Keep /tinumind route as an alias if needed */}
-        <Route
-          path="/tinumind"
-          element={
-            <ProtectedRoute>
-              <TinuMind />
-            </ProtectedRoute>
-          }
-        />
-      
+        >
+          <Route index element={<DashboardPage />} />
+          <Route path="tasks" element={<TasksPage />} />
+        </Route>
+
+
         <Route
           path="/login"
           element={
@@ -66,62 +63,4 @@ function AppRoutes() {
 }
 
 export default AppRoutes;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // Fake authentication function (Replace with real auth logic)
-// const isAuthenticated = () => {
-//   return localStorage.getItem("authToken") !== null;
-// };
-
-// const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-//   return isAuthenticated() ? children : <Navigate to="/login" />;
-// };
-
-// const AppRoutes = () => {
-//   return (
-//     <Router>
-//       <Routes>
-//         {/* Login Route */}
-//         <Route path="/login" element={<Login />} />
-
-//         {/* Signup Route */}
-//         <Route path="/signup" element={<Signup />} />
-
-
-//         {/* Protected Route: Only show App if authenticated */}
-//         <Route
-//           path="/"
-//           element={
-//             <ProtectedRoute>
-//               <TinuMind />
-//             </ProtectedRoute>
-//           }
-//         />
-//       </Routes>
-//     </Router>
-//   );
-// };
-
-// export default AppRoutes;
-
-
-
 

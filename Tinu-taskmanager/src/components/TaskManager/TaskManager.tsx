@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from "react";
-import TaskForm from "../components/TaskForm";
-import TaskColumn from "../components/TaskColumn";
-import TodoIcon from "../assets/direct-hit.png";
-import DoingIcon from "../assets/glowing-star.png";
-import DoneIcon from "../assets/check-mark-button.png";
+import TaskForm from "./TaskForm";
+import TaskColumn from "@/components/TaskManager/TaskColumn";
+import TodoIcon from "@/assets/direct-hit.png";
+import DoingIcon from "@/assets/glowing-star.png";
+import DoneIcon from "@/assets/check-mark-button.png";
 import { fetchAuthSession } from "aws-amplify/auth";
+import { toast } from "sonner"
 
 // Define or import the Task type
 interface TaskComponent {
@@ -31,32 +31,32 @@ const getCurrentUserEmail = async (): Promise<string | null> => {
 const TinuMind = () => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [tasks, setTasks] = useState<TaskComponent[]>(() => {
-  const savedTasks = localStorage.getItem("tasks"); // Consistent key 'tasks'
-  return savedTasks ? JSON.parse(savedTasks) : [];
+    const savedTasks = localStorage.getItem("tasks"); // Consistent key 'tasks'
+    return savedTasks ? JSON.parse(savedTasks) : [];
   });
 
   // --- State stores the actual task object being dragged ---
   const [activeCard, setActiveCard] = useState<TaskComponent | null>(null);
 
   // Fetch the user's email on component mount
-useEffect(() => {
-  const fetchEmail = async () => {
-    const email = await getCurrentUserEmail();
-    setUserEmail(email);
-    if (email) {
-      const savedTasks = localStorage.getItem(`tasks-${email}`);
-      setTasks(savedTasks ? JSON.parse(savedTasks) : []);
-    }
-  };
-  fetchEmail();
-}, []);
+  useEffect(() => {
+    const fetchEmail = async () => {
+      const email = await getCurrentUserEmail();
+      setUserEmail(email);
+      if (email) {
+        const savedTasks = localStorage.getItem(`tasks-${email}`);
+        setTasks(savedTasks ? JSON.parse(savedTasks) : []);
+      }
+    };
+    fetchEmail();
+  }, []);
 
   // Save tasks whenever they change
-useEffect(() => {
-  if (userEmail) {
-    localStorage.setItem(`tasks-${userEmail}`, JSON.stringify(tasks));
-  }
-}, [tasks, userEmail]);
+  useEffect(() => {
+    if (userEmail) {
+      localStorage.setItem(`tasks-${userEmail}`, JSON.stringify(tasks));
+    }
+  }, [tasks, userEmail]);
 
   // --- Simplified handleDelete ---
   // It now receives the task object to delete
@@ -66,6 +66,10 @@ useEffect(() => {
 
     // If relying on object reference (ensure objects are treated immutably):
     setTasks((prevTasks) => prevTasks.filter((task) => task !== taskToDelete));
+    toast("Todo deleted", {
+  description: "The todo has been removed from your list",
+
+});
   };
 
   // --- Updated onDrop logic ---

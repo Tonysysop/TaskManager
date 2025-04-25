@@ -1,4 +1,4 @@
-import { useTheme } from "next-themes"
+import { useTheme } from "@/components/theme-provider"
 import { Toaster as Sonner, ToasterProps } from "sonner"
 
 const Toaster = ({ ...props }: ToasterProps) => {
@@ -13,8 +13,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
-          "--success-bg": "var(--success)", // optional for different toast types
-          "--error-bg": "var(--destructive)",
         } as React.CSSProperties
       }
       {...props}

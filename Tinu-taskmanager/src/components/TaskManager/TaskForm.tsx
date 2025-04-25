@@ -72,12 +72,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
 
   const watchedTitle = watch("taskTitle", "");
 
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTaskData((prev) => ({
-      ...prev,
-      status: e.target.value,
-    }));
-  };
+  // const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //   setTaskData((prev) => ({
+  //     ...prev,
+  //     status: e.target.value,
+  //   }));
+  // };
 
   const onSubmit = (data: TaskInputForm) => {
     setLoading(true);

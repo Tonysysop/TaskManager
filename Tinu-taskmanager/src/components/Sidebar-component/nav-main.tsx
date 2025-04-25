@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import {  type LucideIcon } from "lucide-react"
 import { Link } from "react-router-dom";
 
 import {
@@ -16,7 +16,7 @@ import {
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
-  SidebarMenuSubItem,
+  //SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 
 export function NavMain({

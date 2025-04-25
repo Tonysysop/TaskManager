@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import tinumind from "@/assets/TinuMind.png";
+//import tinumind from "@/assets/TinuMind.png";
 import show_icon from "@/assets/show.png";
 import hide_icon from "@/assets/hide.png";
 import React, { useState } from "react";

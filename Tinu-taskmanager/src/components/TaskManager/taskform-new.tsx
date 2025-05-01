@@ -57,7 +57,7 @@ interface TaskFormProps {
 
 const NewTaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
   const [open, setOpen] = useState(false);
-  const [taskData, setTaskData] = useState<TaskComponent>({
+  const [ ] = useState<TaskComponent>({
     task: "",
     description: "",
     status: "",

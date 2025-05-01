@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies and build
         working-directory: Tinu-taskmanager
         run: |
-          npm ci
+          npm ci --legacy-peer-deps
           npm run build -- --outDir Taskmanager-build
 
 ############Saving build Artifiact 

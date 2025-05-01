@@ -120,9 +120,3 @@ const TaskCard: React.FC<TaskCardProps> = ({
 };
 
 export default TaskCard;
-
-
-
-
-
-

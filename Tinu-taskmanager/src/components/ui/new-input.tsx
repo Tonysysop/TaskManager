@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -7,15 +7,10 @@ type AnimatedInputProps = {
   interval?: number;
 } & React.InputHTMLAttributes<HTMLInputElement>;
 
-export function AnimatedInput({
-  placeholders,
-  interval = 3000,
-  className,
-  value,
-  onFocus,
-  onBlur,
-  ...props
-}: AnimatedInputProps) {
+export const AnimatedInput = forwardRef<HTMLInputElement, AnimatedInputProps>(function AnimatedInput(
+  { placeholders, interval = 3000, className, value, onFocus, onBlur, ...props },
+  ref
+) {
   const [index, setIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -31,6 +26,7 @@ export function AnimatedInput({
   return (
     <div className="relative w-full">
       <input
+        ref={ref}
         {...props}
         value={value}
         onFocus={(e) => {
@@ -67,4 +63,4 @@ export function AnimatedInput({
       )}
     </div>
   );
-}
+});

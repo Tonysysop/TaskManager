@@ -20,6 +20,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/Context/AuthContext"
+import { SidebarTags } from "@/components/Sidebar-component/SidebarTags"
 
 
 
@@ -48,29 +49,6 @@ const data = {
       url: "#",
       icon: NotebookPen,
     },
-    {
-      title: "Tags",
-      url: "#",
-      icon: Tag,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
   ],
   navMain2: [
     {
@@ -98,6 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={data.navMain1} label="Productivity" />
         <NavMain items={data.navMain2} label="Focus" />
+        <SidebarTags />
       </SidebarContent>
       <SidebarFooter>
         {loading ? (

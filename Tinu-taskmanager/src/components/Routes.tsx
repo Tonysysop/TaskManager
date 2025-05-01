@@ -11,7 +11,7 @@ import AppLayout from "@/Pages/AppLayout";
 import Home from "@/Pages/Home";
 import { ProtectedRoute } from "@/Context/ProtectedRoutes";
 import { useAuth } from "@/Context/AuthContext";
-import TasksPage from "@/components/TaskManager/TaskManager"
+import TinuMindPage from "@/Pages/TinumindTask"
 import DashboardPage from "@/Pages/Dashboard";
 
 function AppRoutes() {
@@ -40,7 +40,7 @@ function AppRoutes() {
           }
         >
           <Route index element={<DashboardPage />} />
-          <Route path="tasks" element={<TasksPage />} />
+          <Route path="tasks" element={<TinuMindPage />} />
         </Route>
 
 

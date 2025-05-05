@@ -19,10 +19,10 @@ import { signUp } from "@aws-amplify/auth";
 import { VerifyCodeDialog } from "./Verify-code";
 import { toast } from "sonner";
 import { SlideShow } from "./Slideshow-signup";
-import TaskImage from "@/assets/TaskImage.png";
-import PomoImage from "@/assets/pomoImage.png";
-import TaskImage2 from "@/assets/TaskImage2.png";
-import HabitImage from "@/assets/HabitImage.png";
+import TaskImage from "@/assets/TaskImage.webp";
+import PomoImage from "@/assets/PomoImage.webp";
+import TaskImage2 from "@/assets/TaskImage2.webp";
+import HabitImage from "@/assets/HabitImage.webp";
 
 // Define the validation schema
 const formSchema = z

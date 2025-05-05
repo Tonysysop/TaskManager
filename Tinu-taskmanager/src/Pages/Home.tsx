@@ -6,7 +6,7 @@ import { TypewriterEffect } from "@/components/ui/typewriter-effect";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
-import AppModal from "@/assets/app.jpg"
+import AppModal from "@/assets/App.webp"
 
 const words = [
   { text: "No" },
@@ -139,9 +139,10 @@ export function Home() {
               // src="https://assets.aceternity.com/pro/aceternity-landing.webp"
               src={AppModal}
               alt="Landing page preview"
-              className="aspect-[16/9] brightness-[0.9] h-auto w-full object-cover dark:brightness-[0.7]"
+              className="aspect-[16/9] brightness-[0.9] h-auto w-full object-cover dark:brightness-[0.9]"
               height={1000}
               width={1000}
+              loading="lazy"
             />
           </div>
         </motion.div>

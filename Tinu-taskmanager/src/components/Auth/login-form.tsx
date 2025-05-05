@@ -17,10 +17,10 @@ import MetaIcon from "@/assets/Meta.svg";
 import appleIcon from "@/assets/Apple.svg";
 import { PasswordReset } from "./PasswordReset";
 import { SlideShow } from "./Slideshow-signup";
-import TaskImage from "@/assets/TaskImage.png";
-import PomoImage from "@/assets/pomoImage.png";
-import TaskImage2 from "@/assets/TaskImage2.png";
-import HabitImage from "@/assets/HabitImage.png";
+import TaskImage from "@/assets/TaskImage.webp";
+import PomoImage from "@/assets/PomoImage.webp";
+import TaskImage2 from "@/assets/TaskImage2.webp";
+import HabitImage from "@/assets/HabitImage.webp";
 
 // <-- 1. Import the CarouselApi type
 

@@ -6,7 +6,7 @@ import { TypewriterEffect } from "@/components/ui/typewriter-effect";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
-import AppModal from "@/assets/App.webp"
+import AppModal from "@/assets/app.webp"
 
 const words = [
   { text: "No" },

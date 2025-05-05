@@ -6,7 +6,7 @@ import { TaskAttributes } from '@/types/TaskAttributes';
 import NewTaskForm from '@/components/TaskManager_V2/taskform-new'; // Adjust path
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { toast } from 'sonner';
-import LoaderUi from "./loader";
+import LoaderUi from "./Loader";
 import axios from 'axios';
 
 

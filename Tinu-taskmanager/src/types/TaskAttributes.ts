@@ -10,12 +10,13 @@ interface Tag {
 
 
 export interface TaskAttributes {
+  userId: string
   id: string;
   task: string;
   description: string;
   status: 'completed' | 'in-progress' | 'planned';
   tags: Tag[];
-  dueDate: Date;
+  dueDate: string | Date;
   priority:string
 }
 

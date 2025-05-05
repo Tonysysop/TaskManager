@@ -1,0 +1,11 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "Tinumind"
+resolve_s3 = true
+s3_prefix = "Tinumind"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+parameter_overrides = "MongoUri=\"mongodb+srv://mrtonero:Access1244@cms-db.t3f5e.mongodb.net/TinumindDB?retryWrites=true&w=majority&appName=cms-db\""
+image_repositories = []

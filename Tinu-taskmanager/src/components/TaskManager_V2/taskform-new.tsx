@@ -51,10 +51,10 @@ type TaskInputForm = z.infer<typeof taskInputSchema>;
 
 // Define props type
 interface TaskFormProps {
-  setTasks: React.Dispatch<React.SetStateAction<TaskAttributes[]>>;
+  onCreate: (task: TaskAttributes) => void;
 }
 
-const NewTaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
+const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
   const [open, setOpen] = useState(false);
 
 
@@ -108,17 +108,21 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ setTasks }) => {
       return; // Early return if no valid tags
     }
 
+    const userSub = localStorage.getItem('userSub');
+    console.log("userSub:", userSub)
     const newTask: TaskAttributes = {
+      userId: userSub || "", 
       id: uuidv4(),
       task: data.taskTitle,
       description: data.description || "",
       status: mapTaskTypeToStatus(data.taskType),
       tags: selectedTags, // <-- Now an array of tags
-      dueDate: data.dueDate,
+      dueDate: data.dueDate.toISOString(),
       priority: data.priority
     };
+    console.log("Task:",newTask)
 
-    setTasks((prev) => [...prev, newTask]);
+    onCreate(newTask);
 
     toast.success("Task added", {
       description: "Your new task has been added to the list",

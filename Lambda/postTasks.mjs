@@ -25,13 +25,30 @@ async function connectToDatabase() {
   return { client, db };
 }
 
+// ✅ CORS headers you need to include in ALL responses
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // or specify origin like 'http://localhost:5173'
+  'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+  'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
+};
+
 export async function handler(event) {
+  // ✅ Handle OPTIONS preflight request
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: '',
+    };
+  }
+
   let body;
   try {
     body = JSON.parse(event.body);
   } catch (err) {
     return {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Invalid JSON body' })
     };
   }
@@ -40,6 +57,7 @@ export async function handler(event) {
   if (!body.id || !body.task || !body.status) {
     return {
       statusCode: 422,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Missing required task fields (id, task, status)' })
     };
   }
@@ -49,6 +67,7 @@ export async function handler(event) {
     const filter = { id: body.id };
     const update = {
       $set: {
+        userId: body.userId,
         task: body.task,
         description: body.description || '',
         status: body.status,
@@ -69,6 +88,7 @@ export async function handler(event) {
 
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({
         message: result.upsertedCount ? 'Created new task' : 'Updated task',
         taskId: body.id
@@ -78,6 +98,7 @@ export async function handler(event) {
     console.error('MongoDB error:', err);
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Failed to save task' })
     };
   }

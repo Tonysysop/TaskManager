@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: TinuMind Tasks API
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: nodejs20.x
+    Environment:
+      Variables:
+        MONGODB_URI: mongodb+srv://mrtonero:Access1244@cms-db.t3f5e.mongodb.net/TinumindDB?retryWrites=true&w=majority&appName=cms-db
+        DB_NAME: TinumindDB
+        COLLECTION_NAME: Tasks
+Parameters:
+  MongoUri:
+    Type: String
+    Description: MongoDB connection URI
+Resources:
+  PostTaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: postTasks.handler
+      Runtime: nodejs20.x
+      CodeUri: PostTaskFunction
+      Events:
+        PostApi:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: POST
+            Cors:
+              AllowOrigin: '''http://localhost:5173'''
+    Metadata:
+      SamResourceId: PostTaskFunction
+  GetTasksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: getTasks.handler
+      Runtime: nodejs20.x
+      CodeUri: GetTasksFunction
+      Events:
+        GetApi:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: GET
+            Cors:
+              AllowOrigin: '''http://localhost:5173'''
+    Metadata:
+      SamResourceId: GetTasksFunction
+  DeleteTasksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: deleteTasks.handler
+      Runtime: nodejs20.x
+      CodeUri: DeleteTasksFunction
+      Events:
+        DeleteApi:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: DELETE
+            Cors:
+              AllowOrigin: '''http://localhost:5173'''
+    Metadata:
+      SamResourceId: DeleteTasksFunction
+  UpdateTasksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: UpdateTasks.handler
+      Runtime: nodejs20.x
+      CodeUri: UpdateTasksFunction
+      Events:
+        UpdateApi:
+          Type: Api
+          Properties:
+            Path: /tasks
+            Method: PATCH
+            Cors:
+              AllowOrigin: '''http://localhost:5173'''
+    Metadata:
+      SamResourceId: UpdateTasksFunction

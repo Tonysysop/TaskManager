@@ -2,20 +2,22 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: TinuMind Tasks API
 
+Parameters:
+  MongoDbUri:
+    Type: String
+    Description: MongoDB connection URI
+
 Globals:
   Function:
     Timeout: 10
     Runtime: nodejs20.x
     Environment:
       Variables:
-        MONGODB_URI: mongodb+srv://mrtonero:Access1244@cms-db.t3f5e.mongodb.net/TinumindDB?retryWrites=true&w=majority&appName=cms-db
+        MONGODB_URI: !Ref MongoDbUri
         DB_NAME: TinumindDB
         COLLECTION_NAME: Tasks
 
-Parameters:
-  MongoUri:
-    Type: String
-    Description: MongoDB connection URI
+
 
 Resources:
   PostTaskFunction:
@@ -30,8 +32,6 @@ Resources:
           Properties:
             Path: /tasks
             Method: POST
-            Cors: # Corrected Cors structure
-              AllowOrigin: "'http://localhost:5173'"
 
   GetTasksFunction:
     Type: AWS::Serverless::Function
@@ -45,10 +45,7 @@ Resources:
           Properties:
             Path: /tasks
             Method: GET
-            Cors: # Corrected Cors structure
-              AllowOrigin: "'http://localhost:5173'"
 
-  
   DeleteTasksFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -61,8 +58,6 @@ Resources:
           Properties:
             Path: /tasks
             Method: DELETE
-            Cors: # Corrected Cors structure
-              AllowOrigin: "'http://localhost:5173'"
 
   UpdateTasksFunction:
     Type: AWS::Serverless::Function
@@ -76,6 +71,3 @@ Resources:
           Properties:
             Path: /tasks
             Method: PATCH
-            Cors: # Corrected Cors structure
-              AllowOrigin: "'http://localhost:5173'"
-            

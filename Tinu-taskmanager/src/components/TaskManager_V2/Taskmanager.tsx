@@ -192,7 +192,7 @@ const TinuMind: React.FC = () => {
 
     if (res.status >= 200 && res.status < 300) {
       setTasks(prev => prev.filter(t => t.id !== taskId))
-      toast.success('Task Delete Successfully')
+      toast.success('Task Deleted Successfully')
 
     } else {
       toast.error((res.data as any).error || 'Failed to delete task')

@@ -49,6 +49,7 @@ export function SlideShow({ slidesData, className }: SlideShowProps) {
               <Card className="h-full w-full rounded-xl overflow-hidden">
                 <CardContent className="flex flex-col justify-center items-center h-full space-y-4 p-6">
                   <img
+                    loading="lazy"
                     src={slide.image}
                     alt={`Slide ${index + 1}`}
                     className="rounded-lg w-full h-2/3 object-cover"

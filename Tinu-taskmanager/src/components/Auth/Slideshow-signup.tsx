@@ -47,6 +47,7 @@ export function SlideShow({ slidesData, className }: SlideShowProps) {
               <div className="h-full w-full rounded-xl overflow-hidden bg-white dark:bg-zinc-900 shadow">
                 <div className="flex flex-col justify-center items-center h-full space-y-4 p-6">
                   <img
+                    loading="lazy"
                     src={slide.image}
                     alt={`Slide ${index + 1}`}
                     className="rounded-lg w-full h-2/3 object-cover"

@@ -8,23 +8,25 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 import { toast } from 'sonner';
 import LoaderUi from "./Loader";
 import axios from 'axios';
+import { useAuth } from '@/Context/AuthContext';
 
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
 const STATUS_VALUES = {
-  PLANNED: 'planned',
-  IN_PROGRESS: 'in-progress',
-  COMPLETED: 'completed',
+  PLANNED: 'Planned',
+  IN_PROGRESS: 'In-Progress',
+  COMPLETED: 'Completed',
 } as const;
 
-type StatusValue = 'planned' | 'in-progress' | 'completed';
+type StatusValue = 'Planned' | 'In-Progress' | 'Completed';
 
 const TinuMind: React.FC = () => {
   const [userSub, setUserSub] = useState<string | null>(null);
   const [tasks, setTasks] = useState<TaskAttributes[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeCard, setActiveCard] = useState<TaskAttributes | null>(null);
+
 
   useEffect(() => {
   fetchAuthSession()
@@ -40,15 +42,21 @@ const TinuMind: React.FC = () => {
 }, []);
 
    // Load initial tasks/Get Task
+  const {idToken} = useAuth()
+  console.log("Idtoken:", idToken)
   useEffect(() => {
-  if (!userSub) return;
+  if (!userSub || !idToken) return;
 
   const fetchTasks = async () => {
     setIsLoading(true);
     try {
       const res = await axios.get<TaskAttributes[]>(
         `${API_BASE}/tasks`,
-        { params: { userId: userSub } }
+        {
+          params: { userId: userSub }, 
+          headers: {Authorization: `Bearer ${idToken} `}
+        }
+        
       );
       const data = res.data;
 
@@ -67,7 +75,7 @@ const TinuMind: React.FC = () => {
   };
 
   fetchTasks();
-}, [userSub]);
+}, [userSub, idToken]);
 
 // Create task handler, passed to NewTaskForm
   const handleCreateTask = (newTask: TaskAttributes) => {
@@ -89,9 +97,7 @@ const TinuMind: React.FC = () => {
 
   // Persist to backend using Axios
   axios.post(`${API_BASE}/tasks`, payload, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: {Authorization: `Bearer ${idToken} `}
   })
     .then(() => {
       // Axios throws an error for non-2xx status codes by default,
@@ -160,7 +166,7 @@ const TinuMind: React.FC = () => {
     newStatus : targetStatus
   },
   {
-    headers : { 'Content-Type': 'application/json'},
+    headers: {Authorization: `Bearer ${idToken} `}
   }
   )
   toast.success('Task Status Updated')
@@ -182,7 +188,7 @@ const TinuMind: React.FC = () => {
 
   try {
     const res = await axios.delete(`${API_BASE}/tasks`,{
-      headers: { 'Content-Type': 'application/json' },
+      headers: {Authorization: `Bearer ${idToken} `},
       data: {
         taskId,
         userId: userSub
@@ -219,7 +225,7 @@ const TinuMind: React.FC = () => {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow min-h-0">
         <Column
-          title="Todo"
+          title="Planned"
           icon={ListTodo}
           statusValue={STATUS_VALUES.PLANNED}
           tasks={todoTasks}
@@ -231,7 +237,7 @@ const TinuMind: React.FC = () => {
           activeCard={activeCard}
         />
         <Column
-          title="In Progress"
+          title="In-Progress"
           icon={Loader}
           statusValue={STATUS_VALUES.IN_PROGRESS}
           tasks={doingTasks}
@@ -243,7 +249,7 @@ const TinuMind: React.FC = () => {
           activeCard={activeCard}
         />
         <Column
-          title="Done"
+          title="Completed"
           icon={CheckCircle}
           statusValue={STATUS_VALUES.COMPLETED}
           tasks={doneTasks}

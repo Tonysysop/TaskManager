@@ -13,6 +13,7 @@ interface AuthContextProps {
   isAuthenticated: boolean;
   loading: boolean;
   user: UserInfo | null;
+  idToken: string | null; // 👈 Add this
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -21,6 +22,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<UserInfo | null>(null);
+  const [idToken, setIdToken] = useState<string | null>(null);
+
 
   const checkAuthStatus = async () => {
     console.log("AuthProvider: Starting initial checkAuthStatus...");
@@ -47,10 +50,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         console.log("AuthProvider: Extracted user info →", { name, email });
 
-        setUser({
-          name,
-          email
-        })
+        setUser({ name,email})
+        setIdToken(idToken.toString()); // 👈 Store the raw token
         
       } else {
         // fetchAuthSession succeeded but didn't return expected tokens. Treat as not authenticated.
@@ -76,8 +77,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const hubListenerCancel = Hub.listen('auth', ({ payload }) => {
       // ... switch statement ...
        // Add console logs inside your Hub cases too for debugging
-       console.log('AuthProvider Hub Event:', payload.event);
-       switch (payload.event as string) {
+      console.log('AuthProvider Hub Event:', payload.event);
+      switch (payload.event as string) {
           // ... your cases ...
           case 'signedIn':
           case 'autoSignIn':
@@ -90,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsAuthenticated(false);
             break;
           // ... etc
-       }
+      }
     });
 
     return () => {
@@ -103,7 +104,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const contextValue = {
     isAuthenticated,
     loading,
-    user
+    user,
+    idToken
+
   };
 
   // Add a log here too, to see when the provider itself re-renders

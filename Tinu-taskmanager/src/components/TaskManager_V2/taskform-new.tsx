@@ -39,7 +39,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 const taskInputSchema = z.object({
   taskTitle: z.string().min(2, "Task Title must be at least 2 characters long"),
   description: z.string().optional(),
-  taskType: z.enum(["Todo", "In Progress", "Done"]),
+  taskType: z.enum(["Planned", "In-Progress", "Completed"]),
   dueDate: z.date(),
   priority: z.enum(["No Rush", "Normal", "Urgent", "Critical"]),
   tag: z.array(z.string()).min(1, "Please select at least one tag"),
@@ -78,22 +78,26 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
   } = useForm<TaskInputForm>({
     mode: "onChange",
     resolver: zodResolver(taskInputSchema),
+    defaultValues:{
+      tag: [],
+      taskType: "Planned"
+    },
   });
 
   const watchedTitle = watch("taskTitle", "");
   const watchedDueDate = watch("dueDate")
   const watchedTaskType = watch("taskType");
 
-  const mapTaskTypeToStatus = (taskType: TaskInputForm["taskType"]): "planned" | "in-progress" | "completed" => {
+  const mapTaskTypeToStatus = (taskType: TaskInputForm["taskType"]): "Planned" | "In-Progress" | "Completed" => {
   switch (taskType) {
-    case "Todo":
-      return "planned";
-    case "In Progress":
-      return "in-progress";
-    case "Done":
-      return "completed";
+    case "Planned":
+      return "Planned";
+    case "In-Progress":
+      return "In-Progress";
+    case "Completed":
+      return "Completed";
     default:
-      return "planned";
+      return "Planned";
   }
 };
 
@@ -197,9 +201,9 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Todo">Todo</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Done">Done</SelectItem>
+                      <SelectItem value="Planned">Planned</SelectItem>
+                      <SelectItem value="In-Progress">In-Progress</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.taskType && (

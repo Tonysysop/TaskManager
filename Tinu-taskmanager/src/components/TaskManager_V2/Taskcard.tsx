@@ -60,7 +60,7 @@ const TaskCard = ({
   };
 
   // Safer check for overdue status
-  const isOverdue = task.dueDate instanceof Date && task.dueDate < new Date() && task.status !== 'completed';
+  const isOverdue = task.dueDate instanceof Date && task.dueDate < new Date() && task.status !== 'Completed';
 
   const getShadowColor = () => {
     switch (columnType) { // Use the statusValue passed as columnType

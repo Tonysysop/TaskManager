@@ -14,12 +14,8 @@ export interface TaskAttributes {
   id: string;
   task: string;
   description: string;
-  status: 'completed' | 'in-progress' | 'planned';
+  status: 'Completed' | 'In-Progress' | 'Planned';
   tags: Tag[];
   dueDate: string | Date;
   priority:string
 }
-
-
-
-

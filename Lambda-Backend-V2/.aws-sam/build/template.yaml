@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: TinuMind Tasks API
+Parameters:
+  MongoDbUri:
+    Type: String
+    Description: MongoDB connection URI
+  StageName:
+    Type: String
+    Default: dev
+    Description: API Gateway stage name
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: nodejs20.x
+    Environment:
+      Variables:
+        MONGODB_URI:
+          Ref: MongoDbUri
+        DB_NAME: TinumindDB
+        COLLECTION_NAME: Tasks
+        TAG_COLLECTION_NAME: Tags
+Resources:
+  TinuMindApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: TinuMindApi
+      StageName:
+        Ref: StageName
+  TaskHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: Tinumind.handler
+      MemorySize: 256
+      CodeUri: TaskHandlerFunction
+      Events:
+        TaskApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: TinuMindApi
+            Path: /tasks
+            Method: ANY
+    Metadata:
+      SamResourceId: TaskHandlerFunction
+  TagHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: tagHandler.handler
+      MemorySize: 256
+      CodeUri: TagHandlerFunction
+      Events:
+        TagApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: TinuMindApi
+            Path: /tags
+            Method: ANY
+    Metadata:
+      SamResourceId: TagHandlerFunction

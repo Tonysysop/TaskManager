@@ -2,7 +2,7 @@
 import { cn } from '@/lib/utils';
 import { CheckCircle, Clock, CircleDot } from 'lucide-react';
 
-type StatusType = 'completed' | 'in-progress' | 'planned';
+type StatusType = 'Completed' | 'In-Progress' | 'Planned';
 
 interface TaskStatusProps {
   status: StatusType;
@@ -12,19 +12,19 @@ interface TaskStatusProps {
 const TaskStatus = ({ status, className }: TaskStatusProps) => {
   const getStatusConfig = () => {
     switch (status) {
-      case 'completed':
+      case 'Completed':
         return {
           icon: CheckCircle,
           text: 'Completed',
           color: 'text-emerald-500 bg-emerald-50',
         };
-      case 'in-progress':
+      case 'In-Progress':
         return {
           icon: Clock,
-          text: 'In Progress',
+          text: 'In-Progress',
           color: 'text-amber-500 bg-amber-50',
         };
-      case 'planned':
+      case 'Planned':
         return {
           icon: CircleDot,
           text: 'Planned',

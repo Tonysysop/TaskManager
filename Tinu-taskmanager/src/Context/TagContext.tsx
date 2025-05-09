@@ -71,6 +71,10 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
 
 
   const addTag = async (name: string) => {
+    if (!user?.sub || !idToken) {
+    toast.error("Not authenticated");
+    return;
+  }
     const formatted = formatTagName(name);
     if (!formatted) return;
     const current = Array.isArray(tags) ? tags : [];
@@ -101,6 +105,10 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
 
 
   const removeTag = async (tagId: string) => {
+    if (!user?.sub || !idToken) {
+    toast.error("Not authenticated");
+    return;
+  }
     const current = Array.isArray(tags) ? tags : [];
     try {
       await axios.delete(
@@ -117,6 +125,10 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const editTag = async (tagId: string, newName: string) => {
+    if (!user?.sub || !idToken) {
+    toast.error("Not authenticated");
+    return;
+  }
     const formatted = formatTagName(newName);
     if (!formatted) return;
     const current = Array.isArray(tags) ? tags : [];

@@ -66,7 +66,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
   // Fetch tags from backend
   const {idToken} = useAuth()
   useEffect(() => {
-    if (!userSub) return;
+    if (!userSub || !idToken) return;
     axios
       .get<Tag[]>(`${API_BASE}/tags`, { 
         params: { userId: userSub },

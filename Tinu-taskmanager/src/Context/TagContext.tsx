@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { toast } from "sonner";
-import { fetchAuthSession } from "aws-amplify/auth";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
 
@@ -40,36 +39,18 @@ function formatTagName(name: string) {
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
 }
 
-async function getCurrentUserSub(): Promise<string | null> {
-  try {
-    const session = await fetchAuthSession();
-    const sub = session.tokens?.idToken?.payload?.sub;
-    return typeof sub === 'string' ? sub : null;
-  } catch (error) {
-    console.error("Failed to load user sub", error);
-    toast.error("Failed to load user data");
-    return null;
-  }
-}
-
 const API_BASE = import.meta.env.VITE_API_URL;
 
 export const TagsProvider = ({ children }: { children: ReactNode }) => {
-  const [userSub, setUserSub] = useState<string | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
 
-  // Load the current user's Cognito sub once
-  useEffect(() => {
-    getCurrentUserSub().then(sub => setUserSub(sub));
-  }, []);
-
   // Fetch tags from backend
-  const {idToken} = useAuth()
+  const {idToken, user} = useAuth()
   useEffect(() => {
-    if (!userSub || !idToken) return;
+    if (!user?.sub || !idToken) return;
     axios
       .get<Tag[]>(`${API_BASE}/tags`, { 
-        params: { userId: userSub },
+        params: { userId: user.sub },
         headers: {Authorization: `Bearer ${idToken}`}
         
         })
@@ -86,7 +67,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
         console.error(err);
         toast.error("Failed to load tags");
       });
-  }, [userSub, idToken]);
+  }, [user?.sub, idToken]);
 
 
   const addTag = async (name: string) => {
@@ -107,7 +88,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
     try {
       await axios.post(
         `${API_BASE}/tags`,
-        { ...newTag, userId: userSub },
+        { ...newTag, userId: user.sub },
         { headers: { Authorization: `Bearer ${idToken}` } }
       );
       setTags([...current, newTag]);
@@ -124,7 +105,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
     try {
       await axios.delete(
         `${API_BASE}/tags`,
-        { data: { tagId, userId: userSub }, 
+        { data: { tagId, userId: user.sub }, 
         headers: {Authorization: `Bearer ${idToken}`} }
       );
       setTags(current.filter(t => t.tagId !== tagId));
@@ -150,7 +131,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
     try {
       await axios.patch(
         `${API_BASE}/tags`,
-        { tagId, userId: userSub, name: formatted, color: tagToUpdate.color },
+        { tagId, userId: user.sub, name: formatted, color: tagToUpdate.color },
         { headers: { Authorization: `Bearer ${idToken}` } }
       );
       setTags(current.map(t => t.tagId === tagId ? { ...t, name: formatted } : t));

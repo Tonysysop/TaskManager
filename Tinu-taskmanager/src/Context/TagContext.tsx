@@ -86,7 +86,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
         console.error(err);
         toast.error("Failed to load tags");
       });
-  }, [userSub]);
+  }, [userSub, idToken]);
 
 
   const addTag = async (name: string) => {

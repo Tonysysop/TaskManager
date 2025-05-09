@@ -2,6 +2,7 @@ import { createContext, useContext, useState, ReactNode, useEffect } from "react
 import { toast } from "sonner";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
+import { v4 as uuidv4 } from 'uuid';
 
 export interface Tag {
   tagId: string;
@@ -84,7 +85,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const newTag: Tag = {
-      tagId: crypto.randomUUID(),
+      tagId: uuidv4(),
       name: formatted,
       color: tagColors[Math.floor(Math.random() * tagColors.length)],
     };

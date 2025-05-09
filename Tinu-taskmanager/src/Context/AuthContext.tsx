@@ -8,6 +8,8 @@ import { fetchAuthSession, } from "aws-amplify/auth";
 interface UserInfo {
   name: string;
   email: string;
+  sub: string;
+  
 }
 interface AuthContextProps {
   isAuthenticated: boolean;
@@ -47,10 +49,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const name = String(idToken.payload.name) || "User";
         const email = String(idToken.payload.email) || "";
+        const sub = String(idToken.payload.sub) || "";
 
-        console.log("AuthProvider: Extracted user info →", { name, email });
+        console.log("AuthProvider: Extracted user info →", { name, email, sub });
 
-        setUser({ name,email})
+        setUser({ name,email, sub })
         setIdToken(idToken.toString()); // 👈 Store the raw token
         
       } else {

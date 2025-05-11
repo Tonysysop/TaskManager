@@ -35,6 +35,7 @@ interface TaskCardProps {
   className?: string;
   setActiveCard: (task: TaskAttributes | null) => void; // For visual feedback
   activeCard: TaskAttributes | null; // To check if this card is being dragged
+  onClick: () => void; 
 }
 
 const TaskCard = ({
@@ -44,6 +45,7 @@ const TaskCard = ({
   className,
   setActiveCard,
   activeCard,
+  onClick,
 }: TaskCardProps) => {
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     setActiveCard(task);
@@ -117,6 +119,7 @@ const TaskCard = ({
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onClick={onClick}
     >
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -128,12 +131,13 @@ const TaskCard = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
               >
                 <Trash2 size={16} />
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent onClick={(e) => e.stopPropagation()}> 
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete task?</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -142,10 +146,10 @@ const TaskCard = ({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-destructive hover:bg-destructive/90"
-                  onClick={onDelete}
+                  className="bg-destructive hover:bg-destructive/90 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
                 >
                   Delete
                 </AlertDialogAction>

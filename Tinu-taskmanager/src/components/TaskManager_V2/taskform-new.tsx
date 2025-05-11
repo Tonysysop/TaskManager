@@ -24,7 +24,7 @@ import { useTags } from "@/Context/TagContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { z } from "zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { TaskAttributes } from "@/types/TaskAttributes"; // Ensure TaskAttributes type is complete
 import { v4 as uuidv4 } from "uuid";
@@ -57,7 +57,11 @@ type TaskInputForm = z.infer<typeof taskInputSchema>;
 
 // Define props type
 interface TaskFormProps {
+  mode: 'create' | 'edit';
+  initialTask?: TaskAttributes;
   onCreate: (task: TaskAttributes) => void;
+  onOpenChange: (open: boolean) => void
+  opened: boolean
 }
 
 // Define initial state for the checklist and show on card options
@@ -67,8 +71,7 @@ const initialTaskState = {
   showChecklistOnCard: false,
 };
 
-const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
-  const [open, setOpen] = useState(false);
+const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate, initialTask, mode, opened, onOpenChange,}) => {
   const [taskState, setTaskState] = useState(initialTaskState);
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
 
@@ -95,10 +98,62 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
     defaultValues: {
       tag: [],
       taskType: "Planned",
-      checklist: []
+      checklist: [],
+      ...(initialTask && {
+        taskTitle: initialTask.task,
+        description: initialTask.description,
+        taskType: initialTask.status,
+        dueDate: initialTask.dueDate instanceof Date
+                ? initialTask.dueDate
+                : new Date(initialTask.dueDate),
+        priority: initialTask.priority as any,
+        tag: initialTask.tags.map(t => t.name),
+        checklist: initialTask.checklist || [],
+      }),
       // Set default dueDate if needed, e.g., new Date()
     },
   });
+
+  // inside NewTaskForm:
+useEffect(() => {
+  if (opened && mode === 'create') {
+    // clear the react-hook-form fields
+    reset({
+      taskTitle: '',
+      description: '',
+      taskType: 'Planned',
+      dueDate: new Date(),
+      priority: 'Normal',
+      tag: [],
+      checklist: [],
+    })
+    // clear your local showDescriptionOnCard / showChecklistOnCard
+    setTaskState(initialTaskState)
+  }
+}, [opened, mode, reset])
+
+  // when `initialTask` arrives (e.g. on edit) re-populate
+  useEffect(() => {
+    if (initialTask) {
+      reset({
+        taskTitle: initialTask.task,
+        description: initialTask.description,
+        taskType: initialTask.status,
+        dueDate: initialTask.dueDate instanceof Date
+                ? initialTask.dueDate
+                : new Date(initialTask.dueDate),
+        priority: initialTask.priority as any,
+        tag: initialTask.tags.map(t => t.name),
+        checklist: initialTask.checklist || [],
+      });
+      // also sync your local showDescriptionOnCard / showChecklistOnCard
+      setTaskState({
+        checklist: initialTask.checklist || [],
+        showDescriptionOnCard: initialTask.showDescriptionOnCard,
+        showChecklistOnCard: initialTask.showChecklistOnCard,
+      });
+    }
+  }, [initialTask, reset]);
 
 
   const { fields: checklistFields, append, remove, } = useFieldArray({
@@ -159,24 +214,32 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
         return; // Early return if no valid tags
       }
 
+
+
       const userSub = localStorage.getItem("userSub");
       console.log("userSub:", userSub);
 
+      // Ensure there's a userSub for the task; you might want to handle the case where it's missing
+      if (!userSub) {
+        toast.error("User not authenticated.");
+        return;
+      }
       // Construct the newTask object including checklist and show on card states
   const newTask: TaskAttributes = {
-  userId: userSub || "",
-  id: uuidv4(),
-  task: data.taskTitle,
-  status: mapTaskTypeToStatus(data.taskType),
-  tags: selectedTags,
-  dueDate: data.dueDate.toISOString(),
-  priority: data.priority,
-  ...(taskState.showDescriptionOnCard && { description: data.description || "" }),
-  ...(taskState.showChecklistOnCard && { checklist: taskState.checklist }), // Ensure checklist is included when shown
-  showDescriptionOnCard: taskState.showDescriptionOnCard,
-  showChecklistOnCard: taskState.showChecklistOnCard,
-  checklist: data.checklist || [], // Ensure checklist from form is included here too
-};
+    userId: userSub!,
+    id: mode === 'edit' ? initialTask!.id : uuidv4(),
+    task: data.taskTitle,
+    status: mapTaskTypeToStatus(data.taskType),
+    tags: selectedTags,
+    dueDate: data.dueDate.toISOString(),
+    priority: data.priority,
+    checklist: data.checklist || [],
+    // **Always include description** (defaulting to an empty string if unset)
+    description: data.description ?? '',
+    // But drive the card‐rendering off this flag:
+    showDescriptionOnCard: taskState.showDescriptionOnCard,
+    showChecklistOnCard: taskState.showChecklistOnCard,
+  };
 
       console.log("Task:", newTask);
 
@@ -189,7 +252,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
       // Reset form and local state
       reset();
       setTaskState(initialTaskState);
-      setOpen(false);
+      onOpenChange(false);
     } catch (error) {
       console.error("Error adding task:", error); // Log the error for debugging
       toast.error("An error occurred while adding the task.");
@@ -214,17 +277,14 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
 };
 
 
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600"
-          variant="outline"
-        >
-          + Add Task
-        </Button>
-      </DialogTrigger>
+    <Dialog open={opened} onOpenChange={onOpenChange}>
+      {/* only show this trigger in create mode */}
+      {mode === 'create' && (
+        <DialogTrigger asChild>
+          <Button>+ Add Task</Button>
+        </DialogTrigger>
+      )}
 
       <DialogContent
         forceMount
@@ -239,10 +299,12 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
           <div className="flex-1 overflow-y-auto">
             <DialogHeader className="space-y-2">
               <DialogTitle className="text-2xl font-semibold">
-                Add New Task
+                {mode === 'create' ? 'Add New Task' : 'Edit Task'}
               </DialogTitle>
               <DialogDescription>
-                Organize your tasks effectively by filling in the details below.
+                {mode === 'create'
+                  ? 'Fill in the details to add a new task'
+                : 'Modify the fields and save your changes'}
               </DialogDescription>
             </DialogHeader>
 
@@ -271,69 +333,105 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
               </div>
 
               <div className="mb-4">
-  <Popover modal open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
-    <PopoverTrigger asChild>
-      <div className="w-full min-h-[2.5rem] px-3 py-2 border rounded-lg flex flex-wrap  border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none">
-        {/* Display selected tags as color-coded chips */}
-        {watchedTags.length > 0 ? (
-          watchedTags.map((tagName) => {
-            const tagObj = tags.find((t) => t.name === tagName);
-            const tagClassString = tagObj?.color || "bg-gray-300 text-gray-800";
-            return (
-              <span
-                key={tagName}
-                className={`flex items-center rounded-full px-2 py-1 text-sm ${tagClassString}`}
+                <Popover modal open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <div className="w-full min-h-[2.5rem] px-3 py-2 border rounded-lg flex flex-wrap  border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none">
+                      <TagIcon className="h-6 w-6 mr-2 text-gray-400 dark:text-gray-500 shrink-0" />
+                      {/* Display selected tags as color-coded chips */}
+                      {watchedTags.length > 0 ? (
+                        watchedTags.map((tagName) => {
+                          const tagObj = tags.find((t) => t.name === tagName);
+                          const tagClassString = tagObj?.color || "bg-gray-300 text-gray-800";
+                          return (
+                            <span
+                              key={tagName}
+                              className={`flex items-center rounded-full px-2 mr-2  py-1 text-sm ${tagClassString}`}
+                            >
+                              <TagIcon className="h-4 w-4 mr-1" />
+                              {tagName}
+                              <button
+                                type="button"
+                                className="ml-1 text-gray-600 dark:text-gray-300 hover:text-red-500 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveTag(tagName);
+                                }}
+                              >
+                                ×
+                              </button>
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="text-gray-400 flex items-center gap-2">
+                          
+                          Select tags
+                        </span>
+                      )}
+                    </div>
+                  </PopoverTrigger>
+
+                  <PopoverContent
+                align="start"
+                className="w-40 max-h-60 overflow-y-auto rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-xl p-3" 
               >
-                <TagIcon className="h-4 w-4 mr-1" />
-                {tagName}
-                <button
-                  type="button"
-                  className="ml-1 text-gray-600 dark:text-gray-300 hover:text-red-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveTag(tagName);
-                  }}
-                >
-                  ×
-                </button>
-              </span>
-            );
-          })
-        ) : (
-          <span className="text-gray-400 flex items-center gap-2">
-            <TagIcon className="h-4 w-4 text-gray-900 dark:text-gray-300" />
-            Select tags
-          </span>
-        )}
-      </div>
-    </PopoverTrigger>
+                <div className="grid gap-3"> {/* Reduced gap from 4 to 2 for a more compact list */}
+                  {tags.map((tag) => {
+                    const isSelected = watchedTags.includes(tag.name);
+                    let itemTagClassString = `
+                      flex items-center rounded px-2 py-0.5 text-sm font-medium cursor-pointer
+                      transition-all duration-150 ease-in-out
+                      focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-white dark:focus:ring-offset-neutral-800
+                    `; 
+                    if (!isSelected) {3
+                      itemTagClassString += `
+                        text-neutral-700 bg-neutral-100 hover:bg-neutral-200 dark:text-neutral-300 dark:bg-neutral-700 dark:hover:bg-neutral-600
+                      `; 
+                    } else {
+                      
+                      itemTagClassString += `
+                        text-white bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700
+                      `; 
+                    }
 
-    <PopoverContent align="start" className="w-60 max-h-60 overflow-y-auto rounded-lg bg-zinc-100 dark:bg-gray-800 shadow-lg p-4">
-      <div className="grid gap-4">
-        {tags.map((tag) => {
-          const isSelected = watchedTags.includes(tag.name);
-          const opacityClass = isSelected ? "opacity-100" : "opacity-70";
-          const itemTagClassString = tag.color || "bg-gray-300 text-gray-800"; // Fallback classes
-          return (
-            <div
-              key={tag.name}
-              onClick={() => handleTagSelect(tag.name)}
-              className={`flex items-center rounded-full px-3 py-1 text-sm ${itemTagClassString} ${opacityClass} cursor-pointer transition-colors hover:bg-gray-200 dark:hover:bg-gray-700`}
-            >
-              <TagIcon className="h-4 w-4 mr-1" />
-              {tag.name}
-            </div>
-          );
-        })}
-      </div>
-    </PopoverContent>
-  </Popover>
+                    
+                    if (tag.color) {
+                      itemTagClassString = `
+                        flex items-center rounded-full px-2 py-1 text-xs font-medium cursor-pointer
+                        transition-all duration-150 ease-in-out
+                        focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-white dark:focus:ring-offset-neutral-800
+                        ${tag.color || (isSelected ? 'bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600')}
+                        ${isSelected ? 'ring-2 ring-offset-1 ring-blue-500 dark:ring-offset-neutral-800' : ''}
+                      `; 
+                    }
 
-  {errors.tag && (
-    <p className="text-red-500 text-sm mt-2">{errors.tag.message}</p>
-  )}
-</div>
 
+                    const opacityClass = isSelected ? "opacity-100" : "opacity-80 hover:opacity-100 dark:opacity-100 dark:hover:opacity-90"; 
+
+                    return (
+                      <div
+                        key={tag.name}
+                        onClick={() => handleTagSelect(tag.name)}
+                        className={`${itemTagClassString} ${opacityClass}`}
+                        role="option" 
+                        aria-selected={isSelected} // Added aria-selected for accessibility
+                        tabIndex={0} // Make it focusable
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTagSelect(tag.name); }} // Allow selection with keyboard
+                      >
+                        
+                        <TagIcon className="h-4 w-4 mr-2" /> 
+                        {tag.name}
+                      </div>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+                </Popover> 
+
+                {errors.tag && (
+                  <p className="text-red-500 dark:text-red-400 text-xs mt-2">{errors.tag.message}</p> 
+                )}
+        </div>
 
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Task Type */}
@@ -343,7 +441,6 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
                       onValueChange={(value) => setValue("taskType", value as TaskInputForm["taskType"])}  
                       value={watchedTaskType} 
                     >
-
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -579,7 +676,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
               disabled={loading}
               className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600"
             >
-              {loading ? "Adding..." : "+ Add Task"}
+              {mode === 'create' ? '+ Add Task' : 'Update Task'}
             </Button>
           </DialogFooter>
         </form>{" "}

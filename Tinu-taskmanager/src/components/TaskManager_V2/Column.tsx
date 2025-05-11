@@ -17,6 +17,7 @@ interface ColumnProps {
   setActiveCard: (task: TaskAttributes | null) => void;
   onDrop: (taskId: string, targetStatusValue: TaskAttributes['status'], targetPosition: number) => void;
   activeCard: TaskAttributes | null;
+  onClickTask: (task: TaskAttributes) => void; // Ensure this prop is defined
 }
 
 const Column: React.FC<ColumnProps> = ({
@@ -30,6 +31,7 @@ const Column: React.FC<ColumnProps> = ({
   setActiveCard,
   onDrop,
   activeCard,
+  onClickTask
 }) => {
   const [colOver, setColOver] = useState(false);
 
@@ -85,6 +87,7 @@ const Column: React.FC<ColumnProps> = ({
                   columnType={statusValue}
                   setActiveCard={setActiveCard}
                   activeCard={activeCard}
+                  onClick={() => onClickTask(task)} 
                 />
               </motion.div>
 

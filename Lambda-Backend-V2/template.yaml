@@ -3,9 +3,10 @@ Transform: AWS::Serverless-2016-10-31
 Description: TinuMind Tasks API
 
 Parameters:
-  MongoDBUri:
-    Type: String
-    Description: MongoDB connection URI
+  # MongoDBUri:
+  #   Type: AWS::SSM::Parameter::Value<String> 
+  #   Default: MongoDBUri        
+  #   Description: "The SSM Parameter Store name for the MongoDB URI."
   StageName:
     Type: String
     Default: dev
@@ -17,7 +18,7 @@ Globals:
     Runtime: nodejs20.x
     Environment:
       Variables:
-        MONGODB_URI: !Ref MongoDBUri
+        MONGODB_URI: !Sub '{{resolve:ssm:MongoDBUri:1}}'
         DB_NAME: TinumindDB
         COLLECTION_NAME: Tasks
         TAG_COLLECTION_NAME: Tags

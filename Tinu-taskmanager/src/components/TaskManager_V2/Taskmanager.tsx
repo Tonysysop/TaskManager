@@ -4,7 +4,6 @@ import { ListTodo, Loader, CheckCircle } from 'lucide-react';
 import Column from './Column'; // Adjust path if needed
 import { TaskAttributes } from '@/types/TaskAttributes';
 import NewTaskForm from '@/components/TaskManager_V2/taskform-new'; // Adjust path
-import { fetchAuthSession } from 'aws-amplify/auth';
 import { toast } from 'sonner';
 import LoaderUi from "./Loader";
 import axios from 'axios';
@@ -22,29 +21,19 @@ const STATUS_VALUES = {
 type StatusValue = 'Planned' | 'In-Progress' | 'Completed';
 
 const TinuMind: React.FC = () => {
-  const [userSub, setUserSub] = useState<string | null>(null);
+  const [userSub,] = useState<string | null>(null);
   const [tasks, setTasks] = useState<TaskAttributes[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeCard, setActiveCard] = useState<TaskAttributes | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeTask, setActiveTask] = useState<TaskAttributes | null>(null); // Track active task
+  const [isFormOpen, setIsFormOpen] = useState(false)
 
-
-  useEffect(() => {
-  fetchAuthSession()
-    .then(session => {
-      const payload = session.tokens?.idToken?.payload;
-      setUserSub(payload?.sub as string);
-      localStorage.setItem('userSub', payload?.sub ||""); // 👈 Store userSub
-    })
-    .catch(err => {
-      console.error(err);
-      toast.error('Failed to get user session');
-    });
-}, []);
 
    // Load initial tasks/Get Task
-  const {idToken} = useAuth()
+  const {idToken, user} = useAuth()
   useEffect(() => {
-  if (!userSub || !idToken) return;
+  if (!user?.sub || !idToken) return;
 
   const fetchTasks = async () => {
     setIsLoading(true);
@@ -52,14 +41,13 @@ const TinuMind: React.FC = () => {
       const res = await axios.get<TaskAttributes[]>(
         `${API_BASE}/tasks`,
         {
-          params: { userId: userSub }, 
+          params: { userId: user.sub}, 
           headers: {Authorization: `Bearer ${idToken} `}
         }
         
       );
       const data = res.data;
 
-      console.log("payload:" , data)
 
       setTasks(
         data.map(t => ({
@@ -76,16 +64,16 @@ const TinuMind: React.FC = () => {
   };
 
   fetchTasks();
-}, [userSub, idToken]);
+}, [user?.sub, idToken]);
 
 // Create task handler, passed to NewTaskForm
   const handleCreateTask = (newTask: TaskAttributes) => {
-  if (!userSub) {
+  if (!user?.sub) {
     toast.error('User not authenticated');
     return;
   }
 
-  const payload = { ...newTask, user: userSub };
+  const payload = { ...newTask, user: user.sub };
 
   // Normalize dueDate like you do in your GET request
   const normalizedTask: TaskAttributes = {
@@ -101,11 +89,7 @@ const TinuMind: React.FC = () => {
     headers: {Authorization: `Bearer ${idToken} `}
   })
     .then(() => {
-      // Axios throws an error for non-2xx status codes by default,
-      // so we only need to check for success within the .then()
       toast.success('Task created');
-      // If you need to do something with the response data, it's available in response.data
-      // console.log('Backend response:', response.data);
     })
     .catch(error => {
       console.error('Error creating task:', error);
@@ -158,13 +142,13 @@ const TinuMind: React.FC = () => {
 
   // 🔁 Sync with backend
   try {
-  const userSub = localStorage.getItem('userSub');
-  if (!userSub) return toast.error('User not authenticated');
+  // const userSub = localStorage.getItem('userSub');
+  if (!user?.sub) return toast.error('User not authenticated');
 
   await axios.patch(`${API_BASE}/tasks`,{
-    taskId : draggedTaskId,
-    userId : userSub,
-    newStatus : targetStatus
+    id : draggedTaskId,
+    userId : user.sub,
+    status : targetStatus
   },
   {
     headers: {Authorization: `Bearer ${idToken} `}
@@ -181,8 +165,8 @@ const TinuMind: React.FC = () => {
 
 
   const handleDeleteTask = async (taskId: string) => {
-  const userSub = localStorage.getItem('userSub');
-  if (!userSub) {
+
+  if (!user?.sub) {
     toast.error('User not authenticated');
     return;
   }
@@ -192,7 +176,7 @@ const TinuMind: React.FC = () => {
       headers: {Authorization: `Bearer ${idToken} `},
       data: {
         taskId,
-        userId: userSub
+        userId: user.sub
       }
     })
     console.log("taskID:", taskId, "userId", userSub)
@@ -211,6 +195,13 @@ const TinuMind: React.FC = () => {
   }
 };
 
+// Handle task click for editing
+  const handleTaskClick = (task: TaskAttributes) => {
+    console.log('Task clicked:', task); //
+    setActiveTask(task);
+    setIsEditing(true); // Set to edit mode
+    setIsFormOpen(true)
+  };
 
   const todoTasks = useMemo(() => tasks.filter(t => t.status === STATUS_VALUES.PLANNED), [tasks]);
   const doingTasks = useMemo(() => tasks.filter(t => t.status === STATUS_VALUES.IN_PROGRESS), [tasks]);
@@ -218,12 +209,87 @@ const TinuMind: React.FC = () => {
 
   if (isLoading) return <LoaderUi/>
 
+
+/** Edit */
+const handleEditTask = async (updatedTask: TaskAttributes) => {
+  if (!user?.sub) {
+    toast.error('User not authenticated');
+    return;
+  }
+
+  // 1️⃣ Optimistically update UI
+  setTasks(prev =>
+    prev.map(t =>
+      t.id === updatedTask.id
+        ? { ...updatedTask, dueDate: new Date(updatedTask.dueDate) }
+        : t
+    )
+  );
+  setIsEditing(false);
+
+  try {
+    // Normalize dueDate to ISO:
+    const isoDueDate = new Date(updatedTask.dueDate).toISOString();
+
+    const patchPayload = {
+      id: updatedTask.id,
+      userId: user.sub,
+      task: updatedTask.task,
+      status: updatedTask.status,
+      priority: updatedTask.priority,
+      dueDate: isoDueDate,
+      description: updatedTask.description,
+      checklist: updatedTask.checklist,
+      showDescriptionOnCard: updatedTask.showDescriptionOnCard,
+      showChecklistOnCard: updatedTask.showChecklistOnCard,
+      tags: updatedTask.tags,
+    };
+
+    await axios.patch(`${API_BASE}/tasks`, patchPayload, {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+
+    toast.success('Task updated');
+  } catch (err: any) {
+    console.error('Update failed', err);
+    toast.error(err.response?.data?.error || 'Failed to update task');
+    // Roll back on error
+    setTasks(prev =>
+      prev.map(t =>
+        t.id === updatedTask.id ? activeTask! : t
+      )
+    );
+  }
+};
+
   return (
+
     <div className="flex flex-col gap-6 p-4 md:p-6 h-screen overflow-hidden">
       <div className="flex justify-end">
-        {/* Use onCreate prop instead of setTasks */}
-        <NewTaskForm onCreate={handleCreateTask} />
-      </div>
+  <NewTaskForm
+    mode={isEditing ? 'edit' : 'create'}
+    initialTask={activeTask ?? undefined}
+    opened={isFormOpen}
+    onOpenChange={(open) => {
+      setIsFormOpen(open)
+      if (!open) {
+        // reset edit mode when you close
+        setIsEditing(false)
+        setActiveTask(null)
+      }
+    }}
+    onCreate={(task) => {
+      if (isEditing) {
+        // call your update API
+        handleEditTask(task)
+      } else {
+        handleCreateTask(task)
+      }
+      setIsFormOpen(false)
+    }}
+  />
+</div>
+    
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow min-h-0">
         <Column
           title="Planned"
@@ -236,6 +302,7 @@ const TinuMind: React.FC = () => {
           setActiveCard={setActiveCard}
           onDrop={onDrop}
           activeCard={activeCard}
+          onClickTask={handleTaskClick}  // Pass the click handler
         />
         <Column
           title="In-Progress"
@@ -248,6 +315,7 @@ const TinuMind: React.FC = () => {
           setActiveCard={setActiveCard}
           onDrop={onDrop}
           activeCard={activeCard}
+          onClickTask={handleTaskClick}  // Pass the click handler
         />
         <Column
           title="Completed"
@@ -260,6 +328,7 @@ const TinuMind: React.FC = () => {
           setActiveCard={setActiveCard}
           onDrop={onDrop}
           activeCard={activeCard}
+          onClickTask={handleTaskClick}  // Pass the click handler
         />
       </div>
     </div>

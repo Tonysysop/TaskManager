@@ -89,10 +89,13 @@ async function handlePost(event, collection) {
       userId: body.userId,
       task: body.task,
       description: body.description || '',
+      checklist: body.checklist || [],
       status: body.status,
       priority: body.priority || 'Normal',
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
       tags: body.tags || [],
+      showDescriptionOnCard: body.showDescriptionOnCard, // Added preference for showDescriptionOnCard
+      showChecklistOnCard: body.showChecklistOnCard, 
       updatedAt: new Date(),
     },
     $setOnInsert: {

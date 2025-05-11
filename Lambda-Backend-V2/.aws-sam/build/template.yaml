@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: TinuMind Tasks API
 Parameters:
-  MongoDbUri:
+  MongoDBUri:
     Type: String
     Description: MongoDB connection URI
   StageName:
@@ -16,7 +16,7 @@ Globals:
     Environment:
       Variables:
         MONGODB_URI:
-          Ref: MongoDbUri
+          Ref: MongoDBUri
         DB_NAME: TinumindDB
         COLLECTION_NAME: Tasks
         TAG_COLLECTION_NAME: Tags

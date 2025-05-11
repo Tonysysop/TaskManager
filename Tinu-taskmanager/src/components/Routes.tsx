@@ -13,12 +13,13 @@ import { ProtectedRoute } from "@/Context/ProtectedRoutes";
 import { useAuth } from "@/Context/AuthContext";
 import TinuMindPage from "@/Pages/TinumindTask"
 import DashboardPage from "@/Pages/Dashboard";
+import LoaderUi from "./TaskManager_V2/Loader";
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return <div className="text-center p-4">Loading...</div>;
+    return <LoaderUi />
   }
   console.log("loading:", loading, "isAuthenticated:", isAuthenticated);
 

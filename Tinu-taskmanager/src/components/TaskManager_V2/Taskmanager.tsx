@@ -43,7 +43,6 @@ const TinuMind: React.FC = () => {
 
    // Load initial tasks/Get Task
   const {idToken} = useAuth()
-  console.log("Idtoken:", idToken)
   useEffect(() => {
   if (!userSub || !idToken) return;
 
@@ -59,6 +58,8 @@ const TinuMind: React.FC = () => {
         
       );
       const data = res.data;
+
+      console.log("payload:" , data)
 
       setTasks(
         data.map(t => ({

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,9 +7,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -17,22 +17,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DatePickerWithPresets } from "@/components/Date-picker"
+import { DatePickerWithPresets } from "@/components/Date-picker";
 import { AnimatedInput } from "../ui/new-input";
-import { Circle } from "lucide-react"
-import { useTags } from "@/Context/TagContext" 
+import { Circle, Plus, TagIcon, X } from "lucide-react";
+import { useTags } from "@/Context/TagContext";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import {  z } from "zod";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { z } from "zod";
 import { useState } from "react";
-import { toast } from "sonner"
-import { TaskAttributes } from "@/types/TaskAttributes";
-import { v4 as uuidv4 } from 'uuid'; 
-import { Tag } from 'lucide-react'
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Checkbox } from "@/components/ui/checkbox"
-
-
+import { toast } from "sonner";
+import { TaskAttributes } from "@/types/TaskAttributes"; // Ensure TaskAttributes type is complete
+import { v4 as uuidv4 } from "uuid";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 
 
 // Zod Schema for task input
@@ -43,30 +45,41 @@ const taskInputSchema = z.object({
   dueDate: z.date(),
   priority: z.enum(["No Rush", "Normal", "Urgent", "Critical"]),
   tag: z.array(z.string()).min(1, "Please select at least one tag"),
+  checklist: z.array(
+    z.object({
+      id: z.string(),
+      text: z.string(),
+      completed: z.boolean(),
+    })
+  ).optional(), // Mark checklist as optional here
 });
 type TaskInputForm = z.infer<typeof taskInputSchema>;
-
-
-
 
 // Define props type
 interface TaskFormProps {
   onCreate: (task: TaskAttributes) => void;
 }
 
+// Define initial state for the checklist and show on card options
+const initialTaskState = {
+  checklist: [] as { id: string; text: string; completed: boolean }[],
+  showDescriptionOnCard: true,
+  showChecklistOnCard: false,
+};
+
 const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
   const [open, setOpen] = useState(false);
-
-
+  const [taskState, setTaskState] = useState(initialTaskState);
+  const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
 
   const placeholders = [
     "Add a new task...",
     "What do you want to do?",
     "Enter your goal here...",
   ];
-  const { tags } = useTags()
+  const { tags } = useTags();
   const [loading, setLoading] = useState(false);
-  
+
 
   const {
     register,
@@ -75,120 +88,254 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
     formState: { errors },
     watch,
     reset,
+    control,
   } = useForm<TaskInputForm>({
     mode: "onChange",
     resolver: zodResolver(taskInputSchema),
-    defaultValues:{
+    defaultValues: {
       tag: [],
-      taskType: "Planned"
+      taskType: "Planned",
+      checklist: []
+      // Set default dueDate if needed, e.g., new Date()
     },
   });
 
+
+  const { fields: checklistFields, append, remove, } = useFieldArray({
+  control,
+  name: "checklist",
+});
+
   const watchedTitle = watch("taskTitle", "");
-  const watchedDueDate = watch("dueDate")
+  const watchedDueDate = watch("dueDate");
   const watchedTaskType = watch("taskType");
+  const watchedTags = watch("tag");
 
-  const mapTaskTypeToStatus = (taskType: TaskInputForm["taskType"]): "Planned" | "In-Progress" | "Completed" => {
-  switch (taskType) {
-    case "Planned":
-      return "Planned";
-    case "In-Progress":
-      return "In-Progress";
-    case "Completed":
-      return "Completed";
-    default:
-      return "Planned";
-  }
-};
+  const mapTaskTypeToStatus = (
+    taskType: TaskInputForm["taskType"]
+  ): "Planned" | "In-Progress" | "Completed" => {
+    switch (taskType) {
+      case "Planned":
+        return "Planned";
+      case "In-Progress":
+        return "In-Progress";
+      case "Completed":
+        return "Completed";
+      default:
+        return "Planned";
+    }
+  };
 
+  const handleTagSelect = (tagName: string) => {
+    const currentTags = watchedTags || [];
+    if (currentTags.includes(tagName)) {
+      // Tag is already selected, remove it
+      setValue(
+        "tag",
+        currentTags.filter((tag) => tag !== tagName)
+      );
+    } else {
+      // Tag is not selected, add it
+      setValue("tag", [...currentTags, tagName]);
+    }
+  };
+
+  const handleRemoveTag = (tagName: string) => {
+    const currentTags = watchedTags || [];
+    setValue(
+      "tag",
+      currentTags.filter((tag) => tag !== tagName)
+    );
+  };
 
   const onSubmit = (data: TaskInputForm) => {
-  setLoading(true);
-  try {
-    const selectedTags = tags.filter((tag) => data.tag.includes(tag.name));
+    setLoading(true);
+    try {
+      const selectedTags = tags.filter((tag) => data.tag.includes(tag.name));
 
-    if (selectedTags.length === 0) {
-      toast.error("Please select valid tags.");
-      return; // Early return if no valid tags
+      if (selectedTags.length === 0) {
+        toast.error("Please select valid tags.");
+        setLoading(false); // Stop loading if there's a tag error
+        return; // Early return if no valid tags
+      }
+
+      const userSub = localStorage.getItem("userSub");
+      console.log("userSub:", userSub);
+
+      // Construct the newTask object including checklist and show on card states
+  const newTask: TaskAttributes = {
+  userId: userSub || "",
+  id: uuidv4(),
+  task: data.taskTitle,
+  status: mapTaskTypeToStatus(data.taskType),
+  tags: selectedTags,
+  dueDate: data.dueDate.toISOString(),
+  priority: data.priority,
+  ...(taskState.showDescriptionOnCard && { description: data.description || "" }),
+  ...(taskState.showChecklistOnCard && { checklist: taskState.checklist }), // Ensure checklist is included when shown
+  showDescriptionOnCard: taskState.showDescriptionOnCard,
+  showChecklistOnCard: taskState.showChecklistOnCard,
+  checklist: data.checklist || [], // Ensure checklist from form is included here too
+};
+
+      console.log("Task:", newTask);
+
+      onCreate(newTask);
+
+      toast.success("Task added", {
+        description: "Your new task has been added to the list",
+      });
+
+      // Reset form and local state
+      reset();
+      setTaskState(initialTaskState);
+      setOpen(false);
+    } catch (error) {
+      console.error("Error adding task:", error); // Log the error for debugging
+      toast.error("An error occurred while adding the task.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const userSub = localStorage.getItem('userSub');
-    console.log("userSub:", userSub)
-    const newTask: TaskAttributes = {
-      userId: userSub || "", 
-      id: uuidv4(),
-      task: data.taskTitle,
-      description: data.description || "",
-      status: mapTaskTypeToStatus(data.taskType),
-      tags: selectedTags, // <-- Now an array of tags
-      dueDate: data.dueDate.toISOString(),
-      priority: data.priority
-    };
-    console.log("Task:",newTask)
+  const [newChecklistItem, setNewChecklistItem] = useState("");
+  const [isAddingChecklist, setIsAddingChecklist] = useState(false);
 
-    onCreate(newTask);
-
-    toast.success("Task added", {
-      description: "Your new task has been added to the list",
+  const handleAddChecklistItem = () => {
+  if (newChecklistItem.trim()) {
+    append({
+      id: uuidv4(), // generate a unique ID
+      text: newChecklistItem.trim(),
+      completed: false,
     });
-
-    reset();
-    setOpen(false);
-  } catch (error) {
-    toast.error("An error occurred while adding the task.");
-  } finally {
-    setLoading(false);
+    setNewChecklistItem("");
+    setIsAddingChecklist(false);
   }
 };
+
 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600" variant="outline">+ Add Task</Button>
+        <Button
+          className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600"
+          variant="outline"
+        >
+          + Add Task
+        </Button>
       </DialogTrigger>
 
-      <DialogContent 
+      <DialogContent
         forceMount
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
-        className="sm:max-w-[750px] min-h-[650px] max-h-[90vh] flex flex-col overflow-y-auto"
+        className="dark:bg-zinc-900 bg-zinc-100 sm:max-w-[750px] min-h-[650px] max-h-[90vh] flex flex-col overflow-y-auto"
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-y-auto pr-2">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col flex-1 overflow-y-auto pr-2"
+        >
           <div className="flex-1 overflow-y-auto">
             <DialogHeader className="space-y-2">
-              <DialogTitle className="text-2xl font-semibold">Add New Task</DialogTitle>
-              <DialogDescription>Organize your tasks effectively by filling in the details below.</DialogDescription>
+              <DialogTitle className="text-2xl font-semibold">
+                Add New Task
+              </DialogTitle>
+              <DialogDescription>
+                Organize your tasks effectively by filling in the details below.
+              </DialogDescription>
             </DialogHeader>
 
-            <div className="mt-6 flex flex-col gap-6">
-              {/* Title */}
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="title">Title*</Label>
-                <AnimatedInput
-                  placeholders={placeholders}
-                  interval={4000}
-                  {...register("taskTitle")}
-                  value={watchedTitle}
-                  onChange={(e) => setValue("taskTitle", e.target.value)}
-                />
-                {errors.taskTitle && (
-                  <p className="text-red-500 text-sm mt-1">{errors.taskTitle.message}</p>
-                )}
+            <div className="mt-2 flex flex-col gap-6 shadow-lg">
+              <div className="flex justify-between items-center"></div>
+              <div className="mb-4">
+                <Label htmlFor="taskTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Task Title
+                </Label>
+                <div className="relative mt-2">
+                  <AnimatedInput
+                    id="taskTitle"
+                    className="w-full p-3  rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none"
+                    placeholders={placeholders}
+                    interval={4000}
+                    {...register("taskTitle")}
+                    value={watchedTitle}
+                    onChange={(e) => setValue("taskTitle", e.target.value)}
+                  />
+                  {errors.taskTitle && (
+                    <p className="text-red-500 text-sm mt-2 absolute bottom-0 left-0">
+                      {errors.taskTitle.message}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              {/* Description */}
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  placeholder="Describe your task..."
-                  className="resize-none"
-                  {...register("description")}
-                />
-              </div>
+              <div className="mb-4">
+  <Popover modal open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+    <PopoverTrigger asChild>
+      <div className="w-full min-h-[2.5rem] px-3 py-2 border rounded-lg flex flex-wrap  border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none">
+        {/* Display selected tags as color-coded chips */}
+        {watchedTags.length > 0 ? (
+          watchedTags.map((tagName) => {
+            const tagObj = tags.find((t) => t.name === tagName);
+            const tagClassString = tagObj?.color || "bg-gray-300 text-gray-800";
+            return (
+              <span
+                key={tagName}
+                className={`flex items-center rounded-full px-2 py-1 text-sm ${tagClassString}`}
+              >
+                <TagIcon className="h-4 w-4 mr-1" />
+                {tagName}
+                <button
+                  type="button"
+                  className="ml-1 text-gray-600 dark:text-gray-300 hover:text-red-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveTag(tagName);
+                  }}
+                >
+                  ×
+                </button>
+              </span>
+            );
+          })
+        ) : (
+          <span className="text-gray-400 flex items-center gap-2">
+            <TagIcon className="h-4 w-4 text-gray-900 dark:text-gray-300" />
+            Select tags
+          </span>
+        )}
+      </div>
+    </PopoverTrigger>
 
-              {/* Grid Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <PopoverContent align="start" className="w-60 max-h-60 overflow-y-auto rounded-lg bg-zinc-100 dark:bg-gray-800 shadow-lg p-4">
+      <div className="grid gap-4">
+        {tags.map((tag) => {
+          const isSelected = watchedTags.includes(tag.name);
+          const opacityClass = isSelected ? "opacity-100" : "opacity-70";
+          const itemTagClassString = tag.color || "bg-gray-300 text-gray-800"; // Fallback classes
+          return (
+            <div
+              key={tag.name}
+              onClick={() => handleTagSelect(tag.name)}
+              className={`flex items-center rounded-full px-3 py-1 text-sm ${itemTagClassString} ${opacityClass} cursor-pointer transition-colors hover:bg-gray-200 dark:hover:bg-gray-700`}
+            >
+              <TagIcon className="h-4 w-4 mr-1" />
+              {tag.name}
+            </div>
+          );
+        })}
+      </div>
+    </PopoverContent>
+  </Popover>
+
+  {errors.tag && (
+    <p className="text-red-500 text-sm mt-2">{errors.tag.message}</p>
+  )}
+</div>
+
+
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Task Type */}
                 <div className="flex flex-col gap-2">
                   <Label>Task Type</Label>
@@ -211,7 +358,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
                   )}
                 </div>
 
-                {/* Due Date */}
+                 {/* Due Date */}
                 <div className="flex flex-col gap-2">
                   <Label>Due Date</Label>
                   <DatePickerWithPresets
@@ -223,11 +370,15 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
                         }}
                   />
                 </div>
+                
 
-                {/* Priority */}
                 <div className="flex flex-col gap-2">
                   <Label>Priority</Label>
-                  <Select onValueChange={(value) => setValue("priority", value as TaskInputForm["priority"])}>
+                  <Select
+                    onValueChange={(value) =>
+                      setValue("priority", value as TaskInputForm["priority"])
+                    }
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
@@ -259,51 +410,169 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
                     </SelectContent>
                   </Select>
                   {errors.priority && (
-                    <p className="text-red-500 text-sm">{errors.priority.message}</p>
+                    <p className="text-red-500 text-sm">
+                      {errors.priority.message}
+                    </p>
                   )}
                 </div>
+              </div>
 
-                <div className="flex flex-col gap-2">
-                    <Label>Tags</Label>
-                    <Popover modal>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start">
-                          {watch("tag")?.length > 0 ? `${watch("tag")?.length} tag(s) selected` : "Select tags"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-50">
-                        <div className="grid gap-4">
-                          {tags.map((tag) => (
-                          <div key={tag.name} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={tag.name}
-                              checked={watch("tag")?.includes(tag.name)}
-                              onCheckedChange={(checked) => {
-                                const currentTags = watch("tag") || [];
-                                if (checked) {
-                                  setValue("tag", [...currentTags, tag.name]);
-                                } else {
-                                  setValue("tag", currentTags.filter((t) => t !== tag.name));
-                                }
-                              }}
-                            />
-                            <label htmlFor={tag.name} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                              <Tag className="inline-block h-4 w-4 mr-2 text-indigo-500" /> {/* Add Tag icon */}
-                              {tag.name}
-                            </label>
-                          </div>
-                          ))}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                        {errors.tag && (
-                          <p className="text-red-500 text-sm">{errors.tag.message}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+    <div className="mb-6">
+  <div className="flex justify-between mb-1">
+    <div className="flex flex-col gap-2">
+      <Label htmlFor="description">Notes</Label>
+    </div>
+    <div className="flex items-center gap-2">
+      <Checkbox
+  id="showNotes"
+  checked={taskState.showDescriptionOnCard}
+  onCheckedChange={(checked) =>
+    setTaskState({
+      ...taskState,
+      showDescriptionOnCard: checked === true,
+      showChecklistOnCard:
+        checked === true ? false : taskState.showChecklistOnCard,
+    })
+  }
+  className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400"
+/>
+      <Label htmlFor="showNotes" className="text-sm">
+        Show on card
+      </Label>
+    </div>
+  </div>
 
+  <Textarea
+    id="description"
+    placeholder="Type a description or add notes here..."
+    className="w-full min-h-24 resize-none rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-1 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none"
+    {...register("description")}
+  />
+  {errors.description && (
+    <p className="text-red-500 text-sm mt-2">{errors.description.message}</p>
+  )}
+</div>
+
+<div className="mb-6">
+  <div className="flex justify-between mb-2">
+    <div className="text-sm font-medium">
+      Checklist{" "}
+    {(watch("checklist")?.length ?? 0) > 0 &&
+      `(${(watch("checklist")?.filter((item) => item.completed).length ?? 0)} / ${(watch("checklist")?.length ?? 0)})`}
+    </div>
+    <div className="flex items-center gap-2">
+      <Checkbox
+          id="showChecklist"
+          checked={taskState.showChecklistOnCard}
+          onCheckedChange={(checked) => {
+            setTaskState((prev) => ({
+              ...prev,
+              showChecklistOnCard: checked === true,
+              showDescriptionOnCard: checked === true ? false : prev.showDescriptionOnCard,
+            }));
+          }}
+          className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 dark:data-[state=checked]:bg-purple-600 dark:data-[state=checked]:border-purple-600 dark:data-[state=unchecked]:bg-transparent dark:data-[state=unchecked]:border-gray-500"
+      />
+      <Label htmlFor="showChecklist" className="text-sm text-gray-700 dark:text-gray-300">
+        Show on card
+      </Label>
+    </div>
+  </div>
+
+  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+    {checklistFields.map((item, index) => (
+      <div key={item.id} className="relative flex items-center gap-2 group">
+        <Controller
+          control={control}
+          name={`checklist.${index}.completed`}
+          render={({ field }) => (
+            <Checkbox
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(checked === true)}
+              className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 dark:data-[state=checked]:bg-purple-600 dark:data-[state=checked]:border-purple-600 dark:data-[state=unchecked]:bg-transparent dark:data-[state=unchecked]:border-gray-500"
+            />
+          )}
+        />
+        <input
+          type="text"
+          {...register(`checklist.${index}.text`)}
+          className="flex-1 text-sm bg-transparent outline-none dark:text-white"
+        />
+        <Button
+          variant="ghost"
+          type="button"
+          onClick={() => remove(index)}
+          size="icon"
+          className="absolute right-0 top-1/2 transform -translate-y-1/2 hover:text-red-500 opacity-60 group-hover:opacity-100 transition-opacity"
+          aria-label={`Remove checklist item`}
+        >
+          <X size={14} />
+        </Button>
+      </div>
+    ))}
+
+    {isAddingChecklist ? (
+      <div className="flex items-center gap-2">
+        <Input
+          className="border w-60 text-sm text-gray-900 dark:text-gray-100 dark:border-gray-500"
+          placeholder="Add an item"
+          value={newChecklistItem}
+          onChange={(e) => setNewChecklistItem(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleAddChecklistItem();
+            }
+            if (e.key === "Escape") {
+              setIsAddingChecklist(false);
+              setNewChecklistItem("");
+            }
+          }}
+          autoFocus
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={handleAddChecklistItem}
+          disabled={!newChecklistItem.trim()}
+          className="text-green-500 hover:text-green-600"
+        >
+          <Plus size={16} />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="hover:text-red-500 opacity-60 transition-opacity"
+          onClick={() => {
+            setIsAddingChecklist(false);
+            setNewChecklistItem("");
+          }}
+        >
+          <X size={16} />
+        </Button>
+      </div>
+    ) : (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsAddingChecklist(true)}
+        className="flex items-center gap-2 hover:text-purple-500 dark:text-white"
+      >
+        <div className="w-4 h-4 rounded-full border border-white/30 flex items-center justify-center dark:border-white/20">
+          <Plus size={12} />
+        </div>
+        Add an item
+      </Button>
+    )}
+  </div>
+
+
+</div>
+            </div>
+          </div>{" "}
           <DialogFooter className="border-t mt-auto pt-6">
             <Button
               type="submit"
@@ -313,10 +582,11 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate }) => {
               {loading ? "Adding..." : "+ Add Task"}
             </Button>
           </DialogFooter>
-        </form>
+        </form>{" "}
+        {/* Closing form tag */}
       </DialogContent>
     </Dialog>
   );
-}
+};
 
-export default NewTaskForm
+export default NewTaskForm;

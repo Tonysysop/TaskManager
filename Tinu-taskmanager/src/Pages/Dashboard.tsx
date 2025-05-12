@@ -1,4 +1,5 @@
 
+import { DonutChart } from "@/components/TaskManager_V2/Charts/PieChart"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -37,6 +38,7 @@ export default function DashboardPage() {
             <div className="aspect-video rounded-xl bg-muted/50" />
             <div className="aspect-video rounded-xl bg-muted/50" />
           </div>
+          <DonutChart  />
           <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
         </div>
     </div>

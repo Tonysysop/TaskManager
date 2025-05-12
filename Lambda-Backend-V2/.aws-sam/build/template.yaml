@@ -56,3 +56,19 @@ Resources:
             Method: ANY
     Metadata:
       SamResourceId: TagHandlerFunction
+  StatusCountFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: statusCount.handler
+      MemorySize: 256
+      CodeUri: StatusCountFunction
+      Events:
+        TagApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: TinuMindApi
+            Path: /count
+            Method: GET
+    Metadata:
+      SamResourceId: StatusCountFunction

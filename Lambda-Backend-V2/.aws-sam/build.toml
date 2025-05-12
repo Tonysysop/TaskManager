@@ -7,6 +7,6 @@ architecture = "x86_64"
 handler = "Tinumind.handler"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["TaskHandlerFunction", "TagHandlerFunction"]
+functions = ["TaskHandlerFunction", "TagHandlerFunction", "StatusCountFunction"]
 
 [layer_build_definitions]

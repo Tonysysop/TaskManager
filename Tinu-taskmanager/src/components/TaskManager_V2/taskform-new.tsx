@@ -77,6 +77,8 @@ const NewTaskForm: React.FC<TaskFormProps> = ({ onCreate, initialTask, mode, ope
   const [taskState, setTaskState] = useState(initialTaskState);
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
 
+  const {user} = useAuth()
+
   const placeholders = [
     "Add a new task...",
     "What do you want to do?",
@@ -218,7 +220,7 @@ useEffect(() => {
 
 
 
-      const {user} = useAuth()
+      
       console.log("userSub:", user?.sub);
 
       // Ensure there's a userSub for the task; you might want to handle the case where it's missing

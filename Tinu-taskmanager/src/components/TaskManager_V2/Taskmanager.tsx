@@ -41,7 +41,7 @@ const TinuMind: React.FC = () => {
       const res = await axios.get<TaskAttributes[]>(
         `${API_BASE}/tasks`,
         {
-          params: { userId: user.sub}, 
+          params: { userId: user?.sub}, 
           headers: {Authorization: `Bearer ${idToken} `}
         }
         
@@ -73,7 +73,7 @@ const TinuMind: React.FC = () => {
     return;
   }
 
-  const payload = { ...newTask, user: user.sub };
+  const payload = { ...newTask, userId: user?.sub };
 
   // Normalize dueDate like you do in your GET request
   const normalizedTask: TaskAttributes = {

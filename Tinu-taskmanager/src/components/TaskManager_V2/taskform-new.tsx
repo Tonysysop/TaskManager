@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { useAuth } from '@/Context/AuthContext';
+
 
 
 // Zod Schema for task input
@@ -216,17 +218,17 @@ useEffect(() => {
 
 
 
-      const userSub = localStorage.getItem("userSub");
-      console.log("userSub:", userSub);
+      const {user} = useAuth()
+      console.log("userSub:", user?.sub);
 
       // Ensure there's a userSub for the task; you might want to handle the case where it's missing
-      if (!userSub) {
+      if (!user?.sub) {
         toast.error("User not authenticated.");
         return;
       }
       // Construct the newTask object including checklist and show on card states
   const newTask: TaskAttributes = {
-    userId: userSub!,
+    userId: user?.sub!,
     id: mode === 'edit' ? initialTask!.id : uuidv4(),
     task: data.taskTitle,
     status: mapTaskTypeToStatus(data.taskType),

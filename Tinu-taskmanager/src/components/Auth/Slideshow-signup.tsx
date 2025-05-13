@@ -44,7 +44,7 @@ export function SlideShow({ slidesData, className }: SlideShowProps) {
         >
           {slidesData.map((slide, index) => (
             <CarouselItem key={index} className="h-full min-w-full">
-              <div className="h-full w-full rounded-xl overflow-hidden bg-white dark:bg-zinc-900 shadow">
+              <div className="h-full w-full rounded-xl overflow-hidden">
                 <div className="flex flex-col justify-center items-center h-full space-y-4 p-6">
                   <img
                     loading="lazy"

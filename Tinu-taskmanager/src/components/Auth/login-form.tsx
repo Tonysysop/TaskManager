@@ -120,6 +120,7 @@ export function LoginForm({
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
+                  className="border-zinc-300 dark:border-none"
                   id="email"
                   type="email"
                   placeholder="m@example.com"
@@ -143,6 +144,7 @@ export function LoginForm({
                 </div>
                 <div className="relative">
                   <Input
+                    className="border-zinc-300 dark:border-none"
                     id="password"
                     type={passwordVisible ? "text" : "password"}
                     {...register("password")}
@@ -212,7 +214,7 @@ export function LoginForm({
               </div>
             </div>
           </form>
-          <div className="bg-muted relative hidden md:flex w-full h-full">
+          <div className=" relative hidden md:flex w-full h-full">
             <div className="w-full h-full">
               <SlideShow slidesData={loginSlides} />
             </div>

@@ -116,7 +116,6 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0 flex flex-col">
         <CardContent className="grid p-0 md:grid-cols-2 flex-1 h-full">
-
           <form className="p-6 md:p-8 h-full" onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
@@ -128,6 +127,7 @@ export function SignupForm({
               <div className="grid gap-3">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
+                  className="border-zinc-300 dark:border-none"
                   id="name"
                   type="text"
                   placeholder="John Doe"
@@ -142,6 +142,7 @@ export function SignupForm({
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
+                  className="border-zinc-300 dark:border-none"
                   id="email"
                   type="email"
                   placeholder="m@example.com"
@@ -159,6 +160,7 @@ export function SignupForm({
                 </div>
                 <div className="relative">
                   <Input
+                    className="border-zinc-300 dark:border-none"
                     id="password"
                     type={showPassword ? "text" : "password"}
                     {...register("password")}
@@ -185,6 +187,7 @@ export function SignupForm({
                 </div>
                 <div className="relative">
                   <Input
+                    className="border-zinc-300 dark:border-none"
                     id="comfirmpassword"
                     type={showConfirmPassword ? "text" : "password"}
                     {...register("confirmPassword")}
@@ -237,7 +240,7 @@ export function SignupForm({
                   <img className="h-6 w-6" src={appleIcon} alt="" />
                   <span className="sr-only">Login with Apple</span>
                 </Button>
-                <Button variant="outline" type="button" className="w-1/2">
+                <Button variant="outline" type="button" className="w-1/2 cursor-pointer">
                   <img
                     className="h-6 w-6 filter grayscale transition-all duration-100 hover:grayscale-0 hover:filter-none"
                     src={GoogleIcon}
@@ -265,8 +268,7 @@ export function SignupForm({
               </div>
             </div>
           </form>
-            <SlideShow slidesData={signUpSlides} className="w-full h-full " />
-          
+          <SlideShow slidesData={signUpSlides} className="w-full h-full " />
         </CardContent>
       </Card>
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">

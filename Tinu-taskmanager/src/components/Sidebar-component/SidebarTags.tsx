@@ -90,7 +90,7 @@ export function SidebarTags() {
                       }}
                       className="ml-2 text-destructive hover:text-red-600"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3 h-3 cursor-pointer" />
                     </button>
                   </div>
                 </SidebarMenuSubButton>

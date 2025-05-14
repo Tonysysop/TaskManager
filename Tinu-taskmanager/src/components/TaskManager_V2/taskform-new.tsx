@@ -296,11 +296,11 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
         forceMount
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
-        className="dark:bg-zinc-900 bg-zinc-100 sm:max-w-[750px] min-h-[650px] max-h-[90vh] flex flex-col overflow-y-auto"
+        className=" sm:max-w-[700px] min-h-[650px] max-h-[90vh] flex flex-col overflow-y-auto custom-scrollbar"
       >
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col flex-1 overflow-y-auto pr-2"
+          className="flex flex-col flex-1  pr-2"
         >
           <div className="flex-1 overflow-y-auto">
             <DialogHeader className="space-y-2">

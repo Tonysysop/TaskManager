@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { toast } from "sonner";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
 import { v4 as uuidv4 } from 'uuid';
 import { TagColors } from "@/lib/TagColor";
+import CustomToast from "@/components/TaskManager_V2/Alerts/Custom-toast";
+
 
 export interface Tag {
   tagId: string;
@@ -57,21 +58,21 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
       })
       .catch(err => {
         console.error(err);
-        toast.error("Failed to load tags");
+        CustomToast({variant:"error", description:"Failed to load tags, please try again later", duration:6000})
       });
   }, [user?.sub, idToken]);
 
 
   const addTag = async (name: string) => {
     if (!user?.sub || !idToken) {
-    toast.error("Not authenticated");
+    CustomToast({variant:"error", description:"User is not authenticated", duration:6000})
     return;
   }
     const formatted = formatTagName(name);
     if (!formatted) return;
     const current = Array.isArray(tags) ? tags : [];
     if (current.some(t => t.name.toLowerCase() === formatted.toLowerCase())) {
-      toast.error("Tag already exists");
+      CustomToast({variant:"warning", description:"Tag already exists, use a different name", duration:6000})
       return;
     }
 
@@ -88,20 +89,31 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
         { headers: { Authorization: `Bearer ${idToken}` } }
       );
       setTags([...current, newTag]);
-      toast.success("Tag added");
+      CustomToast({
+        variant: "success",
+        description: "Tag added successfully, you can now use it in your tasks",
+        duration: 6000,
+      });
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.error || "Failed to add tag");
+      CustomToast({variant:"error", 
+        description:err.response?.data?.error || "Failed to add tag", 
+        duration:6000
+      })
     }
   };
 
 
   const removeTag = async (tagId: string) => {
     if (!user?.sub || !idToken) {
-    toast.error("Not authenticated");
+    CustomToast({
+      variant:"error", 
+      description:"User is not authenticated", 
+      duration:6000
+    })  
     return;
   }
-    const current = Array.isArray(tags) ? tags : [];
+    const current = Array.isArray(tags) ? tags : [];  
     try {
       await axios.delete(
         `${API_BASE}/tags`,
@@ -109,23 +121,23 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
         headers: {Authorization: `Bearer ${idToken}`} }
       );
       setTags(current.filter(t => t.tagId !== tagId));
-      toast.success("Tag removed");
+      CustomToast({variant:"success", description:"Tag removed successfully ", duration:6000})
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.error || "Failed to remove tag");
+      CustomToast({variant:"error", description:err.response?.data?.error || "Failed to remove tag", duration:6000})
     }
   };
 
   const editTag = async (tagId: string, newName: string) => {
     if (!user?.sub || !idToken) {
-    toast.error("Not authenticated");
+    CustomToast({variant:"error", description:"User not authenticated", duration:6000})
     return;
   }
     const formatted = formatTagName(newName);
     if (!formatted) return;
     const current = Array.isArray(tags) ? tags : [];
     if (current.some(t => t.name.toLowerCase() === formatted.toLowerCase() && t.tagId !== tagId)) {
-      toast.warning("Tag name already in use");
+      CustomToast({variant:"warning", description:"Tag name already in use", duration:6000})
       return;
     }
 
@@ -139,10 +151,10 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
         { headers: { Authorization: `Bearer ${idToken}` } }
       );
       setTags(current.map(t => t.tagId === tagId ? { ...t, name: formatted } : t));
-      toast.success("Tag updated");
+      CustomToast({variant:"success", description:"Tag updated successfully, you can now use the new name", duration:6000})
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.error || "Failed to update tag");
+      CustomToast({variant:"error", description:err.response?.data?.error || "Failed to update tag", duration:6000})
     }
   };
 

@@ -106,7 +106,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
 
         <PopoverContent
           align="start"
-          className="w-40 max-h-60 overflow-y-auto rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-xl p-3"
+          className="w-45 max-h-60 overflow-y-auto rounded-xl border custom-scrollbar transition-colors shadow-xl p-3"
         >
           <div className="grid gap-3">
             {tags.map((tag) => {

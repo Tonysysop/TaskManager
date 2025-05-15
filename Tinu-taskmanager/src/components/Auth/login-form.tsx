@@ -11,7 +11,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import { signIn } from "@aws-amplify/auth";
+import { signIn, signInWithRedirect  } from "@aws-amplify/auth";
 import GoogleIcon from "@/assets/Google.svg";
 import MetaIcon from "@/assets/Meta.svg";
 import appleIcon from "@/assets/Apple.svg";
@@ -53,6 +53,15 @@ export function LoginForm({
     { image: HabitImage, text: "Check-in to cultivate good habits" },
     { image: TaskImage2, text: "Visualize and track your progress" },
   ];
+
+
+  const signInWithGoogle = async () => {
+    try {
+      await signInWithRedirect({ provider: 'Google' }) // This redirects to the Cognito-hosted UI for Google login
+    } catch (error) {
+      console.error('Google sign-in failed', error)
+    }
+  }
 
   const {
     register,
@@ -168,7 +177,7 @@ export function LoginForm({
               <Button
                 disabled={!passwordValue || loading}
                 type="submit"
-                className={`w-full ${
+                className={`w-full cursor-pointer ${
                   passwordValue || loading
                     ? ""
                     : "bg-gray-400 text-gray-700 cursor-not-allowed"
@@ -186,7 +195,7 @@ export function LoginForm({
                   <img className="h-6 w-6" src={appleIcon} alt="" />
                   <span className="sr-only">Login with Apple</span>
                 </Button>
-                <Button variant="outline" type="button" className="w-full">
+                <Button onClick={signInWithGoogle} variant="outline" type="button" className="w-full">
                   <img
                     className="h-6 w-6 filter grayscale transition-all duration-100 hover:grayscale-0 hover:filter-none"
                     src={GoogleIcon}

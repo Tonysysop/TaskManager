@@ -44,7 +44,14 @@ export function NavUser({
   const { isMobile } = useSidebar()
 
   const handleSignOut = async () => {
-    await signOut();
+    console.log("Attempting global sign out...");
+    try {
+      await signOut({ global: true });
+      // If successful, a redirect occurs and code here might not execute.
+      console.log("Sign out redirect initiated (or failed to redirect)."); 
+    } catch (error) {
+      console.error('Error during signOut call itself: ', error);
+    }
   };
 
   return (

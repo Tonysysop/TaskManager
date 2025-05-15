@@ -67,7 +67,7 @@ export function Home() {
               </motion.span>
             ))}
         </h1>
-        <motion.p
+        <motion.div
           initial={{
             opacity: 0,
           }}
@@ -84,7 +84,7 @@ export function Home() {
           
 
 
-        </motion.p>
+        </motion.div>
         <motion.div
           initial={{
             opacity: 0,

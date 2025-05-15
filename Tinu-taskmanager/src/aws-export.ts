@@ -32,10 +32,12 @@ const awsConfig: ResourcesConfig = {
           ],
           redirectSignIn: [
             "http://localhost:5173", // Example for local development
+            "http://taskmanagerfaithy007.s3-website-us-east-1.amazonaws.com"
            // Example for production
           ],
           redirectSignOut: [
-            "http://localhost:5173"
+            "http://localhost:5173",
+            "http://taskmanagerfaithy007.s3-website-us-east-1.amazonaws.com"
           ],
           responseType: "code", // Standard for web applications
         },

@@ -68,7 +68,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
     <div className="mb-4">
       <Popover modal open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
         <PopoverTrigger asChild>
-          <div className="w-full min-h-[2.5rem] px-3 py-2 border rounded-lg flex flex-wrap border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none">
+          <div className="w-full min-h-[2.5rem] px-3 py-2 border rounded-lg flex flex-wrap border-gray-300 dark:border-gray-600 bg-transparent dark:bg-input/30 focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none">
             <TagIcon className="h-6 w-6 mr-2 text-gray-400 dark:text-gray-500 shrink-0" />
             {watchedTags.length > 0 ? (
               watchedTags.map((tagName) => {
@@ -97,7 +97,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
                 );
               })
             ) : (
-              <span className="text-gray-400 flex items-center gap-2">
+              <span className="text-gray-400 flex items-center text-sm gap-2">
                 Select tags
               </span>
             )}
@@ -106,7 +106,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
 
         <PopoverContent
           align="start"
-          className="w-45 max-h-60 overflow-y-auto rounded-xl border custom-scrollbar transition-colors shadow-xl p-3"
+          className="w-45 max-h-60 overflow-y-auto rounded-xl border custom-scrollbar transition-colors shadow-xl p-3 "
         >
           <div className="grid gap-3">
             {tags.map((tag) => {
@@ -116,7 +116,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
               return (
                 <div
                   key={tag.tagId}
-                  className="flex items-center justify-between gap-2 px-1 py-1 group"
+                  className="flex items-center justify-between gap-2 px-1 py-1 group hover:bg-input/50 dark:hover:bg-input/50 "
                 >
                   {/* Tag pill or input */}
                   {isEditing ? (
@@ -155,14 +155,14 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
                           setEditingTagId(tag.tagId);
                           setEditedTagName(tag.name);
                         }}
-                        className="text-gray-500 hover:text-yellow-500"
+                        className="text-gray-500 hover:text-yellow-500 cursor-pointer"
                         aria-label="Edit tag"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => removeTag(tag.tagId)}
-                        className="text-gray-500 hover:text-red-500"
+                        className="text-gray-500 hover:text-red-500 cursor-pointer"
                         aria-label="Delete tag"
                       >
                         <X className="w-4 h-4" />
@@ -202,9 +202,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
       </Popover>
 
       {errorMessage && (
-        <p className="text-red-500 dark:text-red-400 text-xs mt-2">
-          {errorMessage}
-        </p>
+        <p className="text-red-500  text-xs mt-2">{errorMessage}</p>
       )}
     </div>
   );

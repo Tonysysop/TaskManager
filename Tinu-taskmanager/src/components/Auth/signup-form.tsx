@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-//import tinumind from "@/assets/TinuMind.png";
 import show_icon from "@/assets/show.png";
 import hide_icon from "@/assets/hide.png";
 import React from "react";
@@ -116,12 +115,12 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0 flex flex-col">
         <CardContent className="grid p-0 md:grid-cols-2 flex-1 h-full">
-          <form className="p-6 md:p-8 h-full" onSubmit={handleSubmit(onSubmit)}>
+          <form className="p-6 " onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-2xl font-bold">Join TinuMind Inc Today</h1>
                 <p className="text-muted-foreground text-balance">
-                  Sign up to enjoy the best of TinuMind Inc and stay connected.
+                  Sign up to enjoy the best of TinuMind .
                 </p>
               </div>
               <div className="grid gap-3">

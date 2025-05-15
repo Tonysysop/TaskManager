@@ -18,13 +18,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePickerWithPresets } from "@/components/Date-picker";
-import { AnimatedInput } from "../ui/new-input";
 import { Circle, Plus, X } from "lucide-react";
 import { useTags } from "@/Context/TagContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { z } from "zod";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useId } from "react";
 import { toast } from "sonner";
 import { TaskAttributes } from "@/types/TaskAttributes"; // Ensure TaskAttributes type is complete
 import { v4 as uuidv4 } from "uuid";
@@ -80,12 +79,8 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
 
   const { user } = useAuth();
+  const id = useId();
 
-  const placeholders = [
-    "Add a new task...",
-    "What do you want to do?",
-    "Enter your goal here...",
-  ];
   const { tags } = useTags();
   const [loading, setLoading] = useState(false);
 
@@ -102,7 +97,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
     resolver: zodResolver(taskInputSchema),
     defaultValues: {
       tag: [],
-      taskType: "Planned",
+      taskType: undefined,
       checklist: [],
       ...(initialTask && {
         taskTitle: initialTask.task,
@@ -127,7 +122,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
       reset({
         taskTitle: "",
         description: "",
-        taskType: "Planned",
+        taskType: undefined,
         dueDate: new Date(),
         priority: "Normal",
         tag: [],
@@ -197,11 +192,12 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
       // Tag is already selected, remove it
       setValue(
         "tag",
-        currentTags.filter((tag) => tag !== tagName)
+        currentTags.filter((tag) => tag !== tagName),
+        { shouldValidate: true }
       );
     } else {
       // Tag is not selected, add it
-      setValue("tag", [...currentTags, tagName]);
+      setValue("tag", [...currentTags, tagName], { shouldValidate: true });
     }
   };
 
@@ -288,16 +284,44 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
       {/* only show this trigger in create mode */}
       {mode === "create" && (
         <DialogTrigger asChild>
-          <Button>+ Add Task</Button>
+          <Button className="bg-purple-400 cursor-pointer hover:bg-purple-700">
+            + Add Task
+          </Button>
         </DialogTrigger>
       )}
 
-      <DialogContent
-        forceMount
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onCloseAutoFocus={(e) => e.preventDefault()}
-        className=" sm:max-w-[700px] min-h-[650px] max-h-[90vh] flex flex-col overflow-y-auto custom-scrollbar"
-      >
+<DialogContent
+  forceMount
+  onOpenAutoFocus={(e) => e.preventDefault()}
+  onCloseAutoFocus={(e) => e.preventDefault()}
+  className="
+    flex flex-col overflow-y-auto custom-scrollbar /* Original layout & scroll */
+    max-h-[90vh]                                  /* Keep responsive max-height */
+    w-full                                        /* Ensure it tries to use available width (capped by max-w) */
+
+    /* Base styles (for extra-small screens, < 640px by default) */
+    max-w-lg                                      /* Max width for very small screens (e.g., 512px). Adjust if needed. */
+                                                  /* On screens narrower than 512px, it will be 100% of viewport width. */
+    min-h-[480px]                                 /* Shorter min-height for small viewports */
+    p-4                                           /* Base padding */
+
+    /* sm (small screens, >= 640px) */
+    sm:max-w-[700px]                              /* Your specified max-width, applies from 'sm' upwards */
+    sm:min-h-[550px]                              /* Slightly taller min-height */
+    sm:p-6                                        /* Increased padding */
+
+    /* md (medium screens, >= 768px) */
+    md:min-h-[650px]                              /* Your original min-height, now for 'md' and up */
+                                                  /* max-w is already capped at 700px by  */
+                                                  /* padding is  from 'sm' unless overridden */
+
+    /* lg (large screens, >= 1024px) */
+    lg:p-8                                        /* Optional: Larger padding for more spacing on desktops */
+                                                  /* max-w and min-h are already set by sm/md rules */
+  "
+>
+
+
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col flex-1  pr-2"
@@ -314,27 +338,67 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="mt-2 flex flex-col gap-6 shadow-lg ">
-              <div className="flex justify-between items-center"></div>
-              <div className="mb-4">
-                <Label
-                  htmlFor="taskTitle"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-200"
-                >
-                  Task Title
-                </Label>
-                <div className="relative mt-2">
-                  <AnimatedInput
-                    id="taskTitle"
-                    className="w-full p-3  rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none"
-                    placeholders={placeholders}
-                    interval={4000}
-                    {...register("taskTitle")}
-                    value={watchedTitle}
-                    onChange={(e) => setValue("taskTitle", e.target.value)}
-                  />
+            <div className="mt-2 flex flex-col gap-6  ">
+              <div className="mb-2 mt-6 ">
+                <div className="group">
+                  {" "}
+                  {/* Outer div for group-focus-within context */}
+                  <div className="relative">
+                    {" "}
+                    {/* Inner container for stable height for label positioning */}
+                    <label
+                      htmlFor={id}
+                      className="
+        origin-start
+        absolute block left-0  /* Adjust 'left-3' as needed for horizontal alignment */
+        cursor-text
+        px-1                   /* Padding on the label, outside the span's background */
+        transition-all
+
+        /* --- Initial state (when placeholder is shown / input is empty and not focused) --- */
+        top-1/2 -translate-y-1/2 text-sm text-muted-foreground/70
+
+        /* --- Floated state --- */
+        /* On Focus of any element within the PARENT 'group' */
+        group-focus-within:top-[-1.6rem]  /* Consistent floated top position */
+        group-focus-within:text-sm        /* Consistent floated text size */
+        group-focus-within:font-medium
+        group-focus-within:text-foreground
+        group-focus-within:pointer-events-none
+        group-focus-within:cursor-default
+        group-focus-within:translate-y-0  /* Resets vertical translation */
+
+        /* When the immediately following input sibling does NOT show placeholder (i.e., has text) */
+        has-[+input:not(:placeholder-shown)]:top-[-1.6rem] /* Consistent floated top position */
+        has-[+input:not(:placeholder-shown)]:text-sm       /* Consistent floated text size */
+        has-[+input:not(:placeholder-shown)]:font-medium
+        has-[+input:not(:placeholder-shown)]:text-foreground
+        has-[+input:not(:placeholder-shown)]:pointer-events-none
+        has-[+input:not(:placeholder-shown)]:cursor-default
+        has-[+input:not(:placeholder-shown)]:translate-y-0 /* Resets vertical translation */
+      "
+                    >
+                      {/* Ensure the span has the background for the "cut-out" effect */}
+                      <span className=" inline-flex px-2">Task Title</span>
+                    </label>
+                    <Input
+                      id={id}
+                      type="text"
+                      placeholder=" " /* Crucial for :placeholder-shown logic */
+                      className=" pb-1" /* Adjust padding to prevent initial label overlap with input text */
+                      {...register("taskTitle")}
+                      value={watchedTitle}
+                      onChange={(e) =>
+                        setValue("taskTitle", e.target.value, {
+                          shouldValidate: true,
+                        })
+                      }
+                    />
+                  </div>{" "}
+                  {/* End of inner relative container */}
+                  {/* Error message is now a sibling to the inner relative container */}
                   {errors.taskTitle && (
-                    <p className="text-red-500 text-sm mt-2 absolute bottom-0 left-0">
+                    <p className="text-red-500 text-xs mt-2">
                       {errors.taskTitle.message}
                     </p>
                   )}
@@ -352,7 +416,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
                 errorMessage={errors.tag?.message}
               />
 
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ">
                 {/* Task Type */}
                 <div className="flex flex-col gap-2">
                   <Label>Task Type</Label>
@@ -362,7 +426,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
                     }
                     value={watchedTaskType}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -379,9 +443,10 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
                 </div>
 
                 {/* Due Date */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 ">
                   <Label>Due Date</Label>
                   <DatePickerWithPresets
+                    
                     value={watchedDueDate}
                     onChange={(date) => {
                       if (date) {
@@ -392,14 +457,14 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
                 </div>
 
                 {/* Priority */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 ">
                   <Label>Priority</Label>
                   <Select
                     onValueChange={(value) =>
                       setValue("priority", value as TaskInputForm["priority"])
                     }
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="">
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
                     <SelectContent>
@@ -440,7 +505,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
               <div className="mb-6">
                 <div className="flex justify-between mb-1">
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="description">Notes</Label>
+                    <Label htmlFor="description"></Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Checkbox
@@ -456,27 +521,51 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
                               : taskState.showChecklistOnCard,
                         })
                       }
-                      className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400"
+                      className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-800"
                     />
                     <Label htmlFor="showNotes" className="text-sm">
                       Show on card
                     </Label>
                   </div>
                 </div>
+                <div className="relative w-full">
+                  <Textarea
+                    id="description"
+                    placeholder=" " // required for :placeholder-shown and peer-not-placeholder-shown to work
+                    className="peer h-24 pt-2 px-3 text-sm border border-input  rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
+                    {...register("description")}
+                  />
 
-                <Textarea
-                  id="description"
-                  placeholder="Type a description or add notes here..."
-                  className="w-full min-h-24 resize-none rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent focus:ring-1 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none"
-                  {...register("description")}
-                />
-                {errors.description && (
-                  <p className="text-red-500 text-sm mt-2">
-                    {errors.description.message}
-                  </p>
-                )}
+                  <Label
+                    htmlFor="description"
+                    className="
+                      pointer-events-none absolute left-3 z-10  px-1 text-muted-foreground transition-all
+
+                      /* Default state: When placeholder is shown (input empty, not focused) */
+                      top-1/2  -translate-y-1/2
+
+                      /* Floated state: When input is focused */
+                      peer-focus:top-[-1.75rem] /* Or your previous value like -0.6rem if you preferred it less far out */
+                      peer-focus:translate-y-0
+
+                      /* Floated state: When input has text (placeholder not shown), even if not focused */
+                      peer-not-placeholder-shown:top-[-1.75rem] /* Same as peer-focus */
+                      peer-not-placeholder-shown:text-foreground  /* Same as peer-focus */
+                      peer-not-placeholder-shown:translate-y-0 
+                    "
+                  >
+                    Description
+                  </Label>
+
+                  {errors.description && (
+                    <p className="text-sm text-destructive mt-2">
+                      {errors.description.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Description Checklist */}
               </div>
-
               <div className="mb-6">
                 <div className="flex justify-between mb-2">
                   <div className="text-sm font-medium">
@@ -613,7 +702,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600"
+              className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600 cursor-pointer"
             >
               {mode === "create" ? "+ Add Task" : "Update Task"}
             </Button>

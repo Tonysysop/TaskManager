@@ -99,18 +99,19 @@ export function Home() {
           className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-4"
         >
           <Link to="/login">
-            <button className="w-60 transform rounded-full bg-black px-6 py-2 font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200">
+            <button className="w-60 transform rounded-full bg-slate-700 px-6 py-2 font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-white dark:hover:bg-violet-700 dark:text-black dark:hover:text-white  cursor-pointer">
             
               Login
             </button>
           </Link>
+
           <div className="justify-center text-center">
             <Link to="/signup">
             <HoverBorderGradient
               containerClassName="rounded-full"
               as="button"
               duration={5}
-              className="w-60 dark:bg-black bg-white text-black dark:text-white cursor-pointer "
+              className="w-60 dark:bg-slate-700 dark:hover:bg-slate-800 hover:bg-violet-700 bg-white text-black dark:text-white cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:text-white  "
             >
             
               <span>Sign Up</span>

@@ -16,7 +16,7 @@ import GoogleIcon from "@/assets/Google.svg";
 import MetaIcon from "@/assets/Meta.svg";
 import appleIcon from "@/assets/Apple.svg";
 import { PasswordReset } from "./PasswordReset";
-import { SlideShow } from "./Slideshow-signup";
+import { SlideShow } from "./Slideshow-login";
 import TaskImage from "@/assets/TaskImage.webp";
 import PomoImage from "@/assets/PomoImage.webp";
 import TaskImage2 from "@/assets/TaskImage2.webp";
@@ -218,12 +218,6 @@ export function LoginForm({
             <div className="w-full h-full">
               <SlideShow slidesData={loginSlides} />
             </div>
-
-            {/* <img
-              src={tinumind}
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.8]"
-            /> */}
           </div>
         </CardContent>
       </Card>

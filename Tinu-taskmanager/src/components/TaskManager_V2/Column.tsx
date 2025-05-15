@@ -59,7 +59,7 @@ const Column: React.FC<ColumnProps> = ({
         onDragEnter={handleColDragOver}
         onDragLeave={handleColDragLeave}
         onDrop={handleColDrop}
-        className={`overflow-y-auto overflow-x-hidden space-y-1 max-h-[calc(100vh-220px)] custom-scrollbar pr-1 transition-colors ${
+        className={`overflow-y-auto  space-y-1 max-h-[calc(100vh-220px)] custom-scrollbar pr-1 transition-colors ${
         colOver ? 'bg-violet-400/20' : ''
         }`}
       >

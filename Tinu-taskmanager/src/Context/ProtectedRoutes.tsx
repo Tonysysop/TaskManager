@@ -24,7 +24,7 @@ export const ProtectedRoute: React.FC<Props> = ({ children }) => {
   if (!isAuthenticated) {
     // Only check authentication status *after* loading is complete.
     console.log("🚫 ProtectedRoute: Not authenticated. Redirecting to /login.");
-    return <Navigate to="/login" replace />; // 'replace' is good practice here
+    return <Navigate to="/" replace />; // 'replace' is good practice here
   }
 
   // If loading is false AND isAuthenticated is true:

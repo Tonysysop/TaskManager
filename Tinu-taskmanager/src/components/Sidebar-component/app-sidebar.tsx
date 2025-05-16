@@ -34,9 +34,9 @@ const data = {
   navMain1: [
     {
       title: "Dashboard",
-      url: "/Dashboard",
+      url: "/tinumind",
       icon: House,
-      isActive: true,
+  
     },
     {
       title: "Tasks",
@@ -45,14 +45,14 @@ const data = {
     },
     {
       title: "Notes",
-      url: "#",
+      url: "/tinumind/notes",
       icon: NotebookPen,
     },
   ],
   navMain2: [
     {
       title:"Pomodoro timer",
-      url: "#",
+      url: "/tinumind/pomodoro",
       icon: TimerReset,
     }
   ]
@@ -72,7 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent >
         <NavMain items={data.navMain1} label="Productivity" />
         <NavMain items={data.navMain2} label="Focus" />
         <SidebarTags />

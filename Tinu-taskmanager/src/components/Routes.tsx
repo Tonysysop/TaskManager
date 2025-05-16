@@ -13,7 +13,8 @@ import { ProtectedRoute } from "@/Context/ProtectedRoutes";
 import { useAuth } from "@/Context/AuthContext";
 import TinuMindPage from "@/Pages/TinumindTask"
 import DashboardPage from "@/Pages/Dashboard";
-import LoaderUi from "./TaskManager_V2/Loader";
+import LoaderUi from "@/components/TaskManager_V2/Loader";
+import Notes from "@/Pages/Notes";
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
@@ -42,6 +43,7 @@ function AppRoutes() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="tasks" element={<TinuMindPage />} />
+          <Route path="notes" element={<Notes />} />
         </Route>
 
 

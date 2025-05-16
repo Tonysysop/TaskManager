@@ -6,6 +6,7 @@ const fullPathLabels: Record<string, string> = {
   "/tinumind": "Dashboard", 
   "/tinumind/tasks": "Tasks",
   "/tinumind/notes": "Notes", 
+  "/tinumind/pomodoro": "Pomodoro",
 };
 
 
@@ -13,6 +14,7 @@ const segmentLabels: Record<string, string> = {
   tinumind: "TinuMind", // Label for the 'tinumind' part of the path
   tasks: "Tasks",
   notes: "Notes",
+  pomodoro: "Pomodoro",
   settings: "Settings",
 };
 

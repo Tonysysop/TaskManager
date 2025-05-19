@@ -24,13 +24,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { z } from "zod";
 import { useEffect, useState, useId } from "react";
-import { toast } from "sonner";
 import { TaskAttributes } from "@/types/TaskAttributes"; // Ensure TaskAttributes type is complete
 import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/Context/AuthContext";
 import { TagSelector } from "./TagSelector";
+import CustomToast from "@/components/TaskManager_V2/Alerts/Custom-toast";
 
 // Zod Schema for task input
 const taskInputSchema = z.object({
@@ -215,7 +215,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
       const selectedTags = tags.filter((tag) => data.tag.includes(tag.name));
 
       if (selectedTags.length === 0) {
-        toast.error("Please select valid tags.");
+        CustomToast({variant:"warning", description:"Please select valid tags.", duration:3000})
         setLoading(false); // Stop loading if there's a tag error
         return; // Early return if no valid tags
       }
@@ -224,7 +224,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
 
       // Ensure there's a userSub for the task; you might want to handle the case where it's missing
       if (!user?.sub) {
-        toast.error("User not authenticated.");
+        CustomToast({variant:"error", description:"User not authenticated.", duration:3000})
         return;
       }
       // Construct the newTask object including checklist and show on card states
@@ -248,9 +248,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
 
       onCreate(newTask);
 
-      toast.success("Task added", {
-        description: "Your new task has been added to the list",
-      });
+      CustomToast({variant:"success", description:"Your new task has been added to the list", duration:3000})
 
       // Reset form and local state
       reset();
@@ -258,7 +256,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
       onOpenChange(false);
     } catch (error) {
       console.error("Error adding task:", error); // Log the error for debugging
-      toast.error("An error occurred while adding the task.");
+      CustomToast({variant:"error", description:"An error occurred while adding the task.", duration:3000})
     } finally {
       setLoading(false);
     }

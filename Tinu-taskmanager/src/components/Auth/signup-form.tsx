@@ -119,9 +119,9 @@ export function SignupForm({
 
 	return (
 		<div className={cn("flex flex-col gap-6", className)} {...props}>
-			<Card className="overflow-hidden p-0 flex flex-col">
-				<CardContent className="grid p-0 md:grid-cols-2 flex-1 h-full">
-					<form className="p-6 " onSubmit={handleSubmit(onSubmit)}>
+			<Card className="overflow-hidden p-0 ">
+				<CardContent className="grid p-0 md:grid-cols-2 ">
+					<form className="p-6 md:p-8" onSubmit={handleSubmit(onSubmit)}>
 						<div className="flex flex-col gap-6">
 							<div className="flex flex-col items-center text-center">
 								<h1 className="text-2xl font-bold">Join TinuMind Inc Today</h1>
@@ -258,7 +258,11 @@ export function SignupForm({
 							</div>
 						</div>
 					</form>
-					<SlideShow slidesData={signUpSlides} className="w-full h-full " />
+					<div className=" relative hidden md:flex w-full h-full">
+            <div className="w-full h-full">
+              <SlideShow slidesData={signUpSlides} />
+            </div>
+          </div>
 				</CardContent>
 			</Card>
 			<div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">

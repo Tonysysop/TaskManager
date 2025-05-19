@@ -22,6 +22,8 @@ Globals:
         DB_NAME: TinumindDB
         COLLECTION_NAME: Tasks
         TAG_COLLECTION_NAME: Tags
+        FEEDBACK_COLLECTION_NAME: Feedback
+        
 
 
 
@@ -80,6 +82,22 @@ Resources:
             RestApiId: !Ref TinuMindApi
             Path: /count
             Method: GET
+
+
+  
+  FeedbackFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: feedback.handler
+      MemorySize: 256
+      CodeUri: ./
+      Events:
+        TagApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref TinuMindApi
+            Path: /feedback
+            Method: ANY
 
 
 

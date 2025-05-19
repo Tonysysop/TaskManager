@@ -287,3 +287,145 @@
 .dark .custom-scrollbar:hover::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.1);
 }
+
+
+.glass-card {
+  @apply bg-white/30 dark:bg-slate-900/30 backdrop-blur-lg border border-white/20 dark:border-slate-800/30 shadow-xl;
+}
+
+.feedback-type-button {
+  @apply relative transition-all duration-300 hover:bg-primary/10 hover:shadow-md;
+}
+
+.feedback-type-button.active {
+  @apply bg-primary/20 border-primary/50 dark:bg-primary/30;
+  box-shadow: 0 0 0 2px theme('colors.primary.DEFAULT/30');
+}
+
+.feedback-type-button.active::after {
+  content: '';
+  @apply absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-3 h-3 rotate-45 bg-primary/20 dark:bg-primary/30 border-b border-r border-primary/50;
+}
+
+.animate-delay-75 {
+  animation-delay: 75ms;
+}
+
+.animate-delay-150 {
+  animation-delay: 150ms;
+}
+
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+
+.feedback-success-ring {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  position: absolute;
+  z-index: -1;
+  transform-origin: center;
+}
+
+
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.3s ease-out forwards;
+}
+
+
+
+@keyframes scaleUp {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes scaleDown {
+  0% { transform: scale(1.2); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulseRing {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { opacity: 0.4; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Animation Classes */
+.animate-scale-up {
+  animation: scaleUp 0.5s ease-out forwards;
+}
+
+.animate-scale-down {
+  animation: scaleDown 0.5s ease-out forwards;
+}
+
+.animate-pulse-ring {
+  position: absolute;
+  border-radius: 9999px;
+  animation: pulseRing 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-delay-75 {
+  animation-delay: 75ms;
+}
+
+.animate-delay-150 {
+  animation-delay: 150ms;
+}
+
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Success Ring Styles */
+.feedback-success-ring {
+  position: absolute;
+  border-radius: 9999px;
+  width: 8rem;
+  height: 8rem;
+}
+
+
+
+@layer components {
+  .glass-card {
+    @apply bg-white shadow-lg border border-gray-200;
+  }
+  
+  .feedback-card {
+    @apply transition-all duration-300 hover:shadow-xl;
+  }
+  
+  .feedback-type-btn {
+    @apply relative overflow-hidden transition-all duration-300 hover:shadow-md;
+  }
+  
+  .ripple {
+    @apply absolute rounded-full bg-primary/10 ;
+  }
+}

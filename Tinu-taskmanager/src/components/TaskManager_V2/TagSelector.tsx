@@ -9,6 +9,7 @@ import { useTags } from "@/Context/TagContext";
 import { TagIcon, Pencil, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input"; // Assuming Input component is imported
+import { Button } from "../ui/button";
 
 interface Tag {
   tagId: string; // Assuming you use tagId for editing/removing tags
@@ -106,7 +107,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
 
         <PopoverContent
           align="start"
-          className="w-45 max-h-60 overflow-y-auto rounded-xl border custom-scrollbar transition-colors shadow-xl p-3 "
+          className="w-48 max-h-60 overflow-y-auto rounded-xl border custom-scrollbar transition-colors shadow-xl p-3 "
         >
           <div className="grid gap-3">
             {tags.map((tag) => {
@@ -189,12 +190,13 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
                   />
                 </div>
               ) : (
-                <button
+                <Button
+                  variant="link"
                   onClick={() => setAdding(true)}
-                  className="text-blue-600 hover:underline text-xs mt-2"
+                  className="text-blue-600  text-xs mt-2"
                 >
                   + Add tag
-                </button>
+                </Button>
               )}
             </div>
           </div>

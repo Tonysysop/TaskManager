@@ -290,11 +290,11 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
         </DialogTrigger>
       )}
 
-<DialogContent
-  forceMount
-  onOpenAutoFocus={(e) => e.preventDefault()}
-  onCloseAutoFocus={(e) => e.preventDefault()}
-  className="
+      <DialogContent
+        forceMount
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+        className="
     flex flex-col overflow-y-auto custom-scrollbar /* Original layout & scroll */
     max-h-[90vh]                                  /* Keep responsive max-height */
     w-full                                        /* Ensure it tries to use available width (capped by max-w) */
@@ -319,9 +319,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
     lg:p-8                                        /* Optional: Larger padding for more spacing on desktops */
                                                   /* max-w and min-h are already set by sm/md rules */
   "
->
-
-
+      >
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col flex-1  pr-2"
@@ -446,7 +444,6 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
                 <div className="flex flex-col gap-2 ">
                   <Label>Due Date</Label>
                   <DatePickerWithPresets
-                    
                     value={watchedDueDate}
                     onChange={(date) => {
                       if (date) {

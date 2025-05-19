@@ -16,6 +16,7 @@ const segmentLabels: Record<string, string> = {
   notes: "Notes",
   pomodoro: "Pomodoro",
   settings: "Settings",
+  feedback: "Feedback"
 };
 
 // --- Component Logic ---

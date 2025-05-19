@@ -5,6 +5,7 @@ import {
   GalleryVerticalEnd,
   TimerReset,
   House,
+  MessageCircleCode
 } from "lucide-react"
 
 import { Skeleton } from "../ui/skeleton"
@@ -55,6 +56,13 @@ const data = {
       url: "/tinumind/pomodoro",
       icon: TimerReset,
     }
+  ],
+  navMain3: [
+    {
+      title:"Feedback",
+      url: "/tinumind/feedback",
+      icon: MessageCircleCode,
+    }
   ]
 }
 
@@ -75,6 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent >
         <NavMain items={data.navMain1} label="Productivity" />
         <NavMain items={data.navMain2} label="Focus" />
+        <NavMain items={data.navMain3} label="Feedback" />
         <SidebarTags />
       </SidebarContent>
       <SidebarFooter>

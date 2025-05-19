@@ -15,6 +15,7 @@ import TinuMindPage from "@/Pages/TinumindTask"
 import DashboardPage from "@/Pages/Dashboard";
 import LoaderUi from "@/components/TaskManager_V2/Loader";
 import Notes from "@/Pages/Notes";
+import FeedbackPage from "@/Pages/Feedback";
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
@@ -44,6 +45,8 @@ function AppRoutes() {
           <Route index element={<DashboardPage />} />
           <Route path="tasks" element={<TinuMindPage />} />
           <Route path="notes" element={<Notes />} />
+          <Route path="feedback" element={<FeedbackPage />} />
+          
         </Route>
 
 

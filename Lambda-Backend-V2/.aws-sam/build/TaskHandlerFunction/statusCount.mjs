@@ -19,7 +19,7 @@ async function connectToDatabase() {
   });
 
   await client.connect();
-  cachedDb = client.db(process.env.DB_NAME || 'tinumindDB');
+  cachedDb = client.db(process.env.DB_NAME || 'TinumindDB');
   
   return cachedDb;
 }

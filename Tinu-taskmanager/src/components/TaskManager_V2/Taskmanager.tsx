@@ -4,7 +4,7 @@ import { ListTodo, Loader, CheckCircle } from 'lucide-react';
 import Column from './Column'; // Adjust path if needed
 import { TaskAttributes } from '@/types/TaskAttributes';
 import NewTaskForm from '@/components/TaskManager_V2/taskform-new'; // Adjust path
-import { toast } from 'sonner';
+import CustomToast from "@/components/TaskManager_V2/Alerts/Custom-toast";
 import LoaderUi from "./Loader";
 import axios from 'axios';
 import { useAuth } from '@/Context/AuthContext';
@@ -57,7 +57,7 @@ const TinuMind: React.FC = () => {
       );
     } catch (err: any) {
       console.error('Could not load tasks:', err);
-      toast.error('Could not load tasks');
+      CustomToast({variant:"error", description:"Could not load tasks", duration:3000})
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +69,7 @@ const TinuMind: React.FC = () => {
 // Create task handler, passed to NewTaskForm
   const handleCreateTask = (newTask: TaskAttributes) => {
   if (!user?.sub) {
-    toast.error('User not authenticated');
+    CustomToast({variant:"error", description:"User not authenticated", duration:3000})
     return;
   }
 
@@ -89,13 +89,13 @@ const TinuMind: React.FC = () => {
     headers: {Authorization: `Bearer ${idToken} `}
   })
     .then(() => {
-      toast.success('Task created');
+      CustomToast({variant:"success", description:"Task created", duration:3000})
     })
     .catch(error => {
       console.error('Error creating task:', error);
       // Revert optimistic update if the backend call fails
       setTasks(prev => prev.filter(task => task !== normalizedTask));
-      toast.error('Failed to create task');
+      CustomToast({variant:"error", description:"Failed to create task", duration:3000})
     });
 };
 
@@ -143,7 +143,7 @@ const TinuMind: React.FC = () => {
   // 🔁 Sync with backend
   try {
   // const userSub = localStorage.getItem('userSub');
-  if (!user?.sub) return toast.error('User not authenticated');
+  if (!user?.sub) return CustomToast({variant:"error", description:"User not authenticated", duration:3000});
 
   await axios.patch(`${API_BASE}/tasks`,{
     id : draggedTaskId,
@@ -154,11 +154,11 @@ const TinuMind: React.FC = () => {
     headers: {Authorization: `Bearer ${idToken} `}
   }
   )
-  toast.success('Task Status Updated')
+  CustomToast({variant:"success", description:"Task Status Updated", duration:3000})
 
 } catch (err:any) {
   const message = err.response?.data?.error || err.message || 'Could not reach server'
-  toast.error(message)
+  CustomToast({variant:"error", description:message, duration:3000})
   console.error('Status update failed:', err);
 }
 }
@@ -167,7 +167,7 @@ const TinuMind: React.FC = () => {
   const handleDeleteTask = async (taskId: string) => {
 
   if (!user?.sub) {
-    toast.error('User not authenticated');
+    CustomToast({variant:"error", description:"User not authenticated", duration:3000})
     return;
   }
 
@@ -183,14 +183,14 @@ const TinuMind: React.FC = () => {
 
     if (res.status >= 200 && res.status < 300) {
       setTasks(prev => prev.filter(t => t.id !== taskId))
-      toast.success('Task Deleted Successfully')
+      CustomToast({variant:"success", description:"Task Deleted Successfully", duration:3000})
 
     } else {
-      toast.error((res.data as any).error || 'Failed to delete task')
+      CustomToast({variant:"error", description:(res.data as any).error || 'Failed to delete task', duration:3000})
     }
   } catch (err:any) {
     const message = err.response?.data?.error || err.message || 'Something went wrong'
-    toast.error(message)
+    CustomToast({variant:"error", description:message, duration:3000})
     console.error(err)
   }
 };
@@ -213,7 +213,7 @@ const TinuMind: React.FC = () => {
 /** Edit */
 const handleEditTask = async (updatedTask: TaskAttributes) => {
   if (!user?.sub) {
-    toast.error('User not authenticated');
+    CustomToast({variant:"error", description:"User not authenticated", duration:3000})
     return;
   }
 
@@ -249,10 +249,10 @@ const handleEditTask = async (updatedTask: TaskAttributes) => {
       headers: { Authorization: `Bearer ${idToken}` },
     });
 
-    toast.success('Task updated');
+    CustomToast({variant:"success", description:"Task updated", duration:3000})
   } catch (err: any) {
     console.error('Update failed', err);
-    toast.error(err.response?.data?.error || 'Failed to update task');
+    CustomToast({variant:"error", description:err.response?.data?.error || 'Failed to update task', duration:3000})
     // Roll back on error
     setTasks(prev =>
       prev.map(t =>

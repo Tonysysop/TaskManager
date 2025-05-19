@@ -36,7 +36,7 @@ createRoot(document.getElementById("root")!).render(
         <TagsProvider>
           <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
             <>
-              <Toaster richColors position="top-center" />
+              <Toaster richColors />
               <div className="bg-muted min-h-screen">
                 <ModeToggle />
                 <AppRoutes />

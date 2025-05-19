@@ -83,13 +83,14 @@ export default function CustomToast({
   description,
   duration = 5000,
 }: CustomToastProps) {
-  toast.custom(
+  toast.custom (
     () => (
       <ToastContent variant={variant} description={description} />
     ),
     {
       duration,
+      position: "bottom-right"
     }
   );
 }
-
+ 

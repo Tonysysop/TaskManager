@@ -51,6 +51,8 @@ const TaskCard = ({
     setActiveCard(task);
     e.dataTransfer.setData("text/plain", task.id);
     e.dataTransfer.effectAllowed = "move";
+
+    
   };
 
   const handleDragEnd = () => {
@@ -111,9 +113,9 @@ const TaskCard = ({
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-lg p-4 shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing",
+        "bg-card border border-border rounded-lg p-4 shadow-md transition-all duration-200 cursor-move active:cursor-grabbing",
         getShadowColor(),
-        activeCard?.id === task.id ? "opacity-50 scale-95" : "",
+        activeCard?.id === task.id ? "opacity-50 scale-95 ring-2 ring-primary shadow-lg" : "",
         className
       )}
       draggable

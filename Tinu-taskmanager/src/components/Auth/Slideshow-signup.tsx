@@ -36,7 +36,7 @@ export function SlideShow({ slidesData, className }: SlideShowProps) {
   }, [current, slidesData.length]); // Added slidesData.length as a dependency
 
   return (
-    <div className={`w-full h-full flex flex-col justify-between ${className}`}>
+    <div className={`w-full h-full flex flex-col m justify-between ${className}`}>
       <Carousel className="w-full h-full">
         <CarouselContent
           className="flex transition-transform duration-500 ease-in-out"

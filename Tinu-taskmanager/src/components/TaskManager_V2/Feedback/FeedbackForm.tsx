@@ -19,6 +19,7 @@ import { z } from "zod";
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { useQueryClient } from '@tanstack/react-query';
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -80,6 +81,7 @@ const FeedbackForm = () => {
   const { user, idToken } = useAuth();
   const isMobile = useIsMobile();
 
+  const queryClient = useQueryClient();
   // Mutation for submitting feedback
   const submitFeedbackMutation = useMutation({
     mutationFn: async (formData: typeof defaultFeedbackFormData) => {
@@ -104,6 +106,7 @@ const FeedbackForm = () => {
       return response.data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['feedback', user?.sub] });
       toast.success("Feedback submitted successfully!");
       setIsSubmitted(true);
     },

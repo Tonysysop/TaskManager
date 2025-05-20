@@ -28,7 +28,7 @@ const FeedbackPage = () => {
 
         {showList ? (
           <div
-            className="shadow-lg max-w-5xl w-full mx-auto mt-30 rounded-2xl p-6 md:p-8 bg-card border border-border"
+            className="shadow-lg max-w-5xl w-full mx-auto  rounded-2xl p-6 md:p-8 bg-card border border-border"
 
 
           >

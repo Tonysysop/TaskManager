@@ -1,15 +1,15 @@
 // Inside AuthProvider in AuthContext.tsx
 
-import { Hub } from 'aws-amplify/utils';
+import { Hub } from "aws-amplify/utils";
 import React, { createContext, useContext, useEffect, useState } from "react";
 // 👇 Import AuthTokens type if available (check your Amplify version)
-import { fetchAuthSession, } from "aws-amplify/auth";
+import { fetchAuthSession } from "aws-amplify/auth";
 // If AuthTokens isn't available, you might need to rely on checking session.tokens?.idToken etc.
 interface UserInfo {
   name: string;
   email: string;
   sub: string;
-  
+  groups?: string[];
 }
 interface AuthContextProps {
   isAuthenticated: boolean;
@@ -20,12 +20,13 @@ interface AuthContextProps {
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [idToken, setIdToken] = useState<string | null>(null);
-
 
   const checkAuthStatus = async () => {
     console.log("AuthProvider: Starting initial checkAuthStatus...");
@@ -33,7 +34,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Consider { forceRefresh: false } if you only want to check local storage initially
       const session = await fetchAuthSession(/* { forceRefresh: false } */);
-      console.log("AuthProvider: fetchAuthSession success block. Session:", session);
+      console.log(
+        "AuthProvider: fetchAuthSession success block. Session:",
+        session
+      );
 
       // --- MORE ROBUST CHECK ---
       // Check if valid tokens actually exist in the session result.
@@ -44,28 +48,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (idToken && accessToken) {
         // You could add token expiration checks here if needed, but Amplify
         // often handles basic expiration checks internally when fetching/using tokens.
-        console.log("AuthProvider: Valid tokens found. Setting isAuthenticated = true");
+        console.log(
+          "AuthProvider: Valid tokens found. Setting isAuthenticated = true"
+        );
         setIsAuthenticated(true);
 
         const name = String(idToken.payload.name) || "User";
         const email = String(idToken.payload.email) || "";
         const sub = String(idToken.payload.sub) || "";
+        const groupsClaim = idToken.payload["cognito:groups"];
+        const groups =
+          Array.isArray(groupsClaim) &&
+          groupsClaim.every((g) => typeof g === "string")
+            ? (groupsClaim as string[])
+            : [];
 
-        console.log("AuthProvider: Extracted user info →", { name, email, sub });
+        console.log("AuthProvider: Extracted user info →", {
+          name,
+          email,
+          sub,
+          groups,
+        });
 
-        setUser({ name,email, sub })
+        setUser({ name, email, sub, groups });
         setIdToken(idToken.toString()); // 👈 Store the raw token
-        
       } else {
         // fetchAuthSession succeeded but didn't return expected tokens. Treat as not authenticated.
-        console.log("AuthProvider: fetchAuthSession succeeded but tokens missing. Setting isAuthenticated = false");
+        console.log(
+          "AuthProvider: fetchAuthSession succeeded but tokens missing. Setting isAuthenticated = false"
+        );
         setIsAuthenticated(false);
       }
       // --- End Robust Check ---
-
     } catch (error) {
       // This catch block IS EXPECTED for users who are not logged in
-      console.info("AuthProvider: fetchAuthSession catch block (Expected for no session). Setting isAuthenticated = false. Error:", error);
+      console.info(
+        "AuthProvider: fetchAuthSession catch block (Expected for no session). Setting isAuthenticated = false. Error:",
+        error
+      );
       setIsAuthenticated(false);
     } finally {
       setLoading(false);
@@ -77,28 +97,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuthStatus();
 
     // Hub listener code remains the same...
-    const hubListenerCancel = Hub.listen('auth', ({ payload }) => {
+    const hubListenerCancel = Hub.listen("auth", ({ payload }) => {
       // ... switch statement ...
-       // Add console logs inside your Hub cases too for debugging
-      console.log('AuthProvider Hub Event:', payload.event);
+      // Add console logs inside your Hub cases too for debugging
+      console.log("AuthProvider Hub Event:", payload.event);
       switch (payload.event as string) {
-          // ... your cases ...
-          case 'signedIn':
-          case 'autoSignIn':
-            checkAuthStatus()
-            setIsAuthenticated(true);
-            break;
-          case 'signedOut':
-          case 'tokenRefresh_failure':
-          case 'autoSignIn_failure':
-            setIsAuthenticated(false);
-            break;
-          // ... etc
+        // ... your cases ...
+        case "signedIn":
+        case "autoSignIn":
+          checkAuthStatus();
+          setIsAuthenticated(true);
+          break;
+        case "signedOut":
+        case "tokenRefresh_failure":
+        case "autoSignIn_failure":
+          setIsAuthenticated(false);
+          break;
+        // ... etc
       }
     });
 
     return () => {
-      if (typeof hubListenerCancel === 'function') {
+      if (typeof hubListenerCancel === "function") {
         hubListenerCancel();
       }
     };
@@ -108,17 +128,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated,
     loading,
     user,
-    idToken
-
+    idToken,
   };
 
   // Add a log here too, to see when the provider itself re-renders
   // console.log("AuthProvider Rendering. State:", contextValue);
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 };
 

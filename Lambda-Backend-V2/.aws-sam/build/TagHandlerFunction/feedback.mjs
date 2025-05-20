@@ -36,6 +36,8 @@ export const handler = async (event) => {
   try {
     if (method === "GET") {
       const userId = event.queryStringParameters?.userId;
+      const userGroup = event.queryStringParameters?.userGroup;
+
       if (!userId) {
         return {
           headers: CORS_HEADERS,
@@ -44,13 +46,22 @@ export const handler = async (event) => {
         };
       }
 
-      // Get public feedback + user's private feedback
-      const feedbacks = await collection.find({
-        $or: [
-          { visibility: 'public' },
-          { userId: userId, visibility: 'private' }
-        ]
-      }).sort({ createdAt: -1 }).toArray();
+      let query;
+
+      // If user is in the admin group, return all feedback
+      if (userGroup === "Tinumind-admin") {
+        query = {}; // No filter – return all
+      } else {
+        // Regular user: public + own private feedback
+        query = {
+          $or: [
+            { visibility: 'public' },
+            { userId: userId, visibility: 'private' }
+          ]
+        };
+      }
+
+      const feedbacks = await collection.find(query).sort({ createdAt: -1 }).toArray();
 
       return {
         headers: CORS_HEADERS,
@@ -62,8 +73,7 @@ export const handler = async (event) => {
     if (method === "POST") {
       const body = JSON.parse(event.body);
       const { email, feedback, name, type, userId, visibility } = body;
-      
-      // Validate required fields
+
       if (!email || !feedback || !name || !type || !userId || !visibility) {
         return {
           headers: CORS_HEADERS,
@@ -72,7 +82,6 @@ export const handler = async (event) => {
         };
       }
 
-      // Validate visibility value
       if (!['public', 'private'].includes(visibility)) {
         return {
           headers: CORS_HEADERS,
@@ -83,7 +92,7 @@ export const handler = async (event) => {
 
       const newFeedback = {
         email,
-        feedback: feedback,
+        feedback,
         name,
         feedbackType: type,
         userId,

@@ -20,6 +20,8 @@ import type { AnyFieldApi } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useQueryClient } from '@tanstack/react-query';
+import { v4 as uuidv4 } from "uuid";
+
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -86,6 +88,7 @@ const FeedbackForm = () => {
   const submitFeedbackMutation = useMutation({
     mutationFn: async (formData: typeof defaultFeedbackFormData) => {
       const payload = {
+        feedbackId: uuidv4(), // ✅ Add this
         feedback: formData.feedback,
         type: formData.feedbackType,
         visibility: formData.visibilityType,

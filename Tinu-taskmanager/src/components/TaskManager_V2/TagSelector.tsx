@@ -1,18 +1,10 @@
-// components/TagSelector.tsx
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useTags } from "@/Context/TagContext";
 import { TagIcon, Pencil, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input"; // Assuming Input component is imported
-import { Button } from "../ui/button";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
 
 interface Tag {
-  tagId: string; // Assuming you use tagId for editing/removing tags
+  tagId: string;
   name: string;
   color?: string;
 }
@@ -43,10 +35,6 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
   const [editedTagName, setEditedTagName] = useState("");
   const safeTags = Array.isArray(tags) ? tags : [];
 
-  useEffect(() => {
-    console.log("Tags updated:", safeTags);
-  }, [safeTags]);
-
   const handleAddTag = () => {
     const trimmed = newTag.trim();
     if (trimmed && !safeTags.find((t) => t.name === trimmed)) {
@@ -67,49 +55,48 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
 
   return (
     <div className="mb-4">
-      <Popover modal open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
-        <PopoverTrigger asChild>
-          <div className="w-full min-h-[2.5rem] px-3 py-2 border rounded-lg flex flex-wrap border-gray-300 dark:border-gray-600 bg-transparent dark:bg-input/30 focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none">
-            <TagIcon className="h-6 w-6 mr-2 text-gray-400 dark:text-gray-500 shrink-0" />
-            {watchedTags.length > 0 ? (
-              watchedTags.map((tagName) => {
-                const tagObj = tags.find((t) => t.name === tagName);
-                const tagClassString =
-                  tagObj?.color || "bg-gray-300 text-gray-800";
+      {/* Tag display and toggle */}
+      <div
+        className="w-full min-h-[2.5rem] px-3 py-2 border rounded-lg flex flex-wrap items-center border-gray-300 dark:border-gray-600 bg-transparent dark:bg-input/30 focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none cursor-pointer"
+        onClick={() => setTagPopoverOpen(!tagPopoverOpen)}
+      >
+        <TagIcon className="h-6 w-6 mr-2 text-gray-400 dark:text-gray-500 shrink-0" />
+        {watchedTags.length > 0 ? (
+          watchedTags.map((tagName) => {
+            const tagObj = tags.find((t) => t.name === tagName);
+            const tagClassString = tagObj?.color || "bg-gray-300 text-gray-800";
 
-                return (
-                  <span
-                    key={tagName}
-                    className={`flex items-center rounded-full px-2 mr-2 py-1 text-sm ${tagClassString}`}
-                  >
-                    <TagIcon className="h-4 w-4 mr-1" />
-                    {tagName}
-                    <button
-                      type="button"
-                      className="ml-1 text-gray-600 dark:text-gray-300 hover:text-red-500 cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveTag(tagName);
-                      }}
-                    >
-                      ×
-                    </button>
-                  </span>
-                );
-              })
-            ) : (
-              <span className="text-gray-400 flex items-center text-sm gap-2">
-                Select tags
+            return (
+              <span
+                key={tagName}
+                className={`flex items-center rounded-full px-2 mr-2 py-1 text-sm ${tagClassString}`}
+              >
+                <TagIcon className="h-4 w-4 mr-1" />
+                {tagName}
+                <button
+                  type="button"
+                  className="ml-1 text-gray-600 dark:text-gray-300 hover:text-red-500 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveTag(tagName);
+                  }}
+                >
+                  ×
+                </button>
               </span>
-            )}
-          </div>
-        </PopoverTrigger>
+            );
+          })
+        ) : (
+          <span className="text-gray-400 flex items-center text-sm gap-2">
+            Select tags
+          </span>
+        )}
+      </div>
 
-        <PopoverContent
-          align="start"
-          className="w-48 max-h-60 overflow-y-auto rounded-xl border custom-scrollbar transition-colors shadow-xl p-3 "
-        >
-          <div className="grid gap-3">
+      {/* Toggleable content instead of popover */}
+      {tagPopoverOpen && (
+        <div className="mt-2 w-48 max-h-60 overflow-y-auto rounded-xl border p-3 shadow-lg  custom-scrollbar">
+          <div className="grid gap-2">
             {tags.map((tag) => {
               const isSelected = watchedTags.includes(tag.name);
               const isEditing = editingTagId === tag.tagId;
@@ -117,9 +104,8 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
               return (
                 <div
                   key={tag.tagId}
-                  className="flex items-center justify-between gap-2 px-1 py-1 group hover:bg-input/50 dark:hover:bg-input/50 "
+                  className="flex items-center justify-between gap-2 px-1 py-1 group hover:bg-input/50 dark:hover:bg-input/50"
                 >
-                  {/* Tag pill or input */}
                   {isEditing ? (
                     <Input
                       value={editedTagName}
@@ -134,13 +120,9 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
                   ) : (
                     <div
                       className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs cursor-pointer flex-1 truncate
-                                  ${tag.color || "bg-gray-200 text-gray-800"}
-                                  ${
-                                    isSelected
-                                      ? "ring-2 ring-offset-1 ring-blue-500"
-                                      : ""
-                                  }
-                              `}
+                        ${tag.color || "bg-gray-200 text-gray-800"} 
+                        ${isSelected ? "ring-2 ring-offset-1 ring-blue-500" : ""}
+                      `}
                       onClick={() => handleTagSelect(tag.name)}
                     >
                       <TagIcon className="h-4 w-4 shrink-0" />
@@ -148,7 +130,6 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
                     </div>
                   )}
 
-                  {/* Edit/Delete buttons */}
                   {!isEditing && (
                     <div className="flex items-center gap-1 ml-2">
                       <button
@@ -173,6 +154,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
                 </div>
               );
             })}
+
             {/* Add new tag */}
             <div>
               {adding ? (
@@ -190,21 +172,21 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
                   />
                 </div>
               ) : (
-                <Button
-                  variant="link"
+                <button
                   onClick={() => setAdding(true)}
-                  className="text-blue-600  text-xs mt-2"
+                  className="text-blue-600 hover:underline text-xs mt-2"
                 >
                   + Add tag
-                </Button>
+                </button>
               )}
             </div>
           </div>
-        </PopoverContent>
-      </Popover>
+        </div>
+      )}
 
+      {/* Error message */}
       {errorMessage && (
-        <p className="text-red-500  text-xs mt-2">{errorMessage}</p>
+        <p className="text-red-500 text-xs mt-2">{errorMessage}</p>
       )}
     </div>
   );

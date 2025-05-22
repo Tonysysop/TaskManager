@@ -1,6 +1,21 @@
 
 import { cn } from '@/lib/utils';
-import { Circle } from 'lucide-react';
+
+
+function StatusDot({ className }: { className?: string }) {
+  return (
+    <svg
+      width="8"
+      height="8"
+      fill="currentColor"
+      viewBox="0 0 8 8"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="4" cy="4" r="4" />
+    </svg>
+  )
+}
 
 export interface PriorityType {
   name: string;
@@ -20,10 +35,10 @@ const TaskPriority = ({ priority, className }: TaskTagProps) => {
         priority.color,
         className
       )}
-    >
-      <Circle size={12} className="shrink-0" />
-      <span>{priority.name}</span>
-    </div>
+			>
+				<StatusDot className="shrink-0" />
+				<span>{priority.name}</span>
+			</div>
   );
 };
 

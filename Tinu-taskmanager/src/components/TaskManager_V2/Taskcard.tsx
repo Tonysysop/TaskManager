@@ -86,7 +86,7 @@ const TaskCard = ({
       case "Normal":
         return "text-blue-500";
       case "No Rush":
-        return "text-gray-400";
+        return "text-emerald-600";
       default:
         return "text-gray-500";
     }

@@ -26,7 +26,6 @@ import {
 	Search,
 	Filter,
 	MoreHorizontal,
-
 } from "lucide-react";
 import {
 	Dialog,
@@ -62,10 +61,10 @@ import {
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
-
 } from "@/components/ui/alert-dialog";
 
 import CustomToast from "../Alerts/Custom-toast";
+import { cn } from "@/lib/utils";
 
 interface FeedbackItem {
 	feedbackId: string;
@@ -511,7 +510,14 @@ const FeedbackList = () => {
 										<TableCell>
 											<div className="flex items-center gap-1">
 												{getTypeIcon(item.feedbackType)}
-												<Badge variant="outline" className="capitalize">
+												<Badge
+													variant="outline"
+													className={cn(
+														"capitalize",
+														item.treated &&
+															"text-gray-600 line-through "
+													)}
+												>
 													{item.feedbackType}
 												</Badge>
 											</div>
@@ -618,7 +624,25 @@ const FeedbackList = () => {
 			</div>
 
 			<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-				<DialogContent className="sm:max-w-md w-[90%] max-w-2xl">
+				<DialogContent
+					className="
+					flex flex-col 
+				
+					w-full
+					max-w-lg
+					sm:max-w-[700px]
+				
+					min-h-[200px] 
+					sm:min-h-[300px]
+					md:min-h-[400px]
+				
+					max-h-[80vh]   /* Ensures it never overflows screen on large monitors */
+				
+					p-4
+					sm:p-6
+					lg:p-8
+				"
+				>
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2">
 							{selectedFeedback && getTypeIcon(selectedFeedback.feedbackType)}
@@ -631,14 +655,14 @@ const FeedbackList = () => {
 							{selectedFeedback && formatDate(selectedFeedback.createdAt)}
 						</DialogDescription>
 					</DialogHeader>
-					<div className="space-y-4">
+					<div className="space-y-4 overflow-y-auto custom-scrollbar">
 						<div className="p-4 bg-muted/50 dark:bg-muted/20 rounded-md">
 							<h4 className="text-sm font-medium text-gray-500 mb-1">From</h4>
 							<p className="font-medium">{selectedFeedback?.name}</p>
 							<p className="text-muted-foreground">{selectedFeedback?.email}</p>
 						</div>
 						<div>
-							<h4 className="text-sm font-medium text-muted-foreground mb-2">
+							<h4 className="text-sm font-medium text-muted-foreground mb-2 ">
 								Feedback
 							</h4>
 							<p className="whitespace-pre-wrap bg-muted/50 dark:bg-muted/20 p-4 rounded-md">

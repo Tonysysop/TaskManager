@@ -41,7 +41,12 @@ function FieldInfo({ field }: { field: AnyFieldApi }) {
 
 // --- Schema ---
 const formSchema = z.object({
-  feedback: z.string().min(5, "Feedback must be at least 5 characters"),
+  feedback: z
+  .string()
+  .trim()
+  .min(5, "Feedback must be at least 5 characters")
+  .max(200, "Feedback must be no more than 200 characters"),
+
   feedbackType: z.enum(["suggestion", "bug", "feature"]),
   visibilityType: z.enum(["public", "private"]),
 });

@@ -18,7 +18,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { DatePickerWithPresets } from "@/components/Date-picker";
-import { Circle, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useTags } from "@/Context/TagContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray, Controller } from "react-hook-form";

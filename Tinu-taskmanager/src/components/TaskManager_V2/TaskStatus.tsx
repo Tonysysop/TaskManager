@@ -16,19 +16,20 @@ const TaskStatus = ({ status, className }: TaskStatusProps) => {
         return {
           icon: CheckCircle,
           text: 'Completed',
-          color: 'text-emerald-500 bg-emerald-50',
+          color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/40 dark:text-emerald-300',
         };
       case 'In-Progress':
         return {
           icon: Clock,
           text: 'In-Progress',
-          color: 'text-amber-500 bg-amber-50',
+          //text-amber-300 bg-amber-900/40
+          color: 'text-amber-500 bg-amber-50 dark:bg-amber-900/40 dark:text-amber-300',
         };
       case 'Planned':
         return {
           icon: CircleDot,
           text: 'Planned',
-          color: 'text-purple-500 bg-purple-50',
+          color: 'text-purple-500 bg-purple-50 dark:bg-purple-900/40 dark:text-purple-300',
         };
       default:
         return {

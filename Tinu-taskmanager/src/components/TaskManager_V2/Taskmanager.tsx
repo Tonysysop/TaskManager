@@ -1,378 +1,488 @@
 // ./TaskManager.tsx (TinuMind component - API-backed on create)
-import React, { useEffect, useMemo, useState,} from 'react';
-import { ListTodo, Loader, CheckCircle } from 'lucide-react';
-import Column from './Column'; // Adjust path if needed
-import { TaskAttributes } from '@/types/TaskAttributes';
-import NewTaskForm from '@/components/TaskManager_V2/taskform-new'; // Adjust path
+import React, { useEffect, useMemo, useState } from "react";
+import { ListTodo, Loader, CheckCircle } from "lucide-react";
+import Column from "./Column"; // Adjust path if needed
+import { TaskAttributes } from "@/types/TaskAttributes";
+import NewTaskForm from "@/components/TaskManager_V2/taskform-new"; // Adjust path
 import CustomToast from "@/components/TaskManager_V2/Alerts/Custom-toast";
 import LoaderUi from "./Loader";
-import axios from 'axios';
-import { useAuth } from '@/Context/AuthContext';
-
+import axios from "axios";
+import { useAuth } from "@/Context/AuthContext";
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
 const STATUS_VALUES = {
-  PLANNED: 'Planned',
-  IN_PROGRESS: 'In-Progress',
-  COMPLETED: 'Completed',
+	PLANNED: "Planned",
+	IN_PROGRESS: "In-Progress",
+	COMPLETED: "Completed",
 } as const;
 
-type StatusValue = 'Planned' | 'In-Progress' | 'Completed';
+type StatusValue = "Planned" | "In-Progress" | "Completed";
 
 const TinuMind: React.FC = () => {
-  const [userSub,] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<TaskAttributes[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeCard, setActiveCard] = useState<TaskAttributes | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [activeTask, setActiveTask] = useState<TaskAttributes | null>(null); // Track active task
-  const [isFormOpen, setIsFormOpen] = useState(false)
+	const [userSub] = useState<string | null>(null);
+	const [tasks, setTasks] = useState<TaskAttributes[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [activeCard, setActiveCard] = useState<TaskAttributes | null>(null);
+	const [isEditing, setIsEditing] = useState(false);
+	const [activeTask, setActiveTask] = useState<TaskAttributes | null>(null); // Track active task
+	const [isFormOpen, setIsFormOpen] = useState(false);
 
+	// Load initial tasks/Get Task
+	const { idToken, user } = useAuth();
+	useEffect(() => {
+		if (!user?.sub || !idToken) return;
 
-   // Load initial tasks/Get Task
-  const {idToken, user} = useAuth()
-  useEffect(() => {
-  if (!user?.sub || !idToken) return;
+		const fetchTasks = async () => {
+			setIsLoading(true);
+			try {
+				const res = await axios.get<TaskAttributes[]>(`${API_BASE}/tasks`, {
+					params: { userId: user?.sub },
+					headers: { Authorization: `Bearer ${idToken} ` },
+				});
+				const data = res.data;
 
-  const fetchTasks = async () => {
-    setIsLoading(true);
-    try {
-      const res = await axios.get<TaskAttributes[]>(
-        `${API_BASE}/tasks`,
-        {
-          params: { userId: user?.sub}, 
-          headers: {Authorization: `Bearer ${idToken} `}
-        }
-        
-      );
-      const data = res.data;
+				setTasks(
+					data.map((t) => ({
+						...t,
+						dueDate: t.dueDate ? new Date(t.dueDate) : new Date(0),
+					}))
+				);
+			} catch (err: any) {
+				console.error("Could not load tasks:", err);
+				CustomToast({
+					variant: "error",
+					description: "Could not load tasks",
+					duration: 3000,
+				});
+			} finally {
+				setIsLoading(false);
+			}
+		};
 
+		fetchTasks();
+	}, [user?.sub, idToken]);
 
-      setTasks(
-        data.map(t => ({
-          ...t,
-          dueDate: t.dueDate ? new Date(t.dueDate) : new Date(0),
-        }))
-      );
-    } catch (err: any) {
-      console.error('Could not load tasks:', err);
-      CustomToast({variant:"error", description:"Could not load tasks", duration:3000})
-    } finally {
-      setIsLoading(false);
-    }
-  };
+	// Create task handler, passed to NewTaskForm
+	const handleCreateTask = (newTask: TaskAttributes) => {
+		if (!user?.sub) {
+			CustomToast({
+				variant: "error",
+				description: "User not authenticated",
+				duration: 3000,
+			});
+			return;
+		}
 
-  fetchTasks();
-}, [user?.sub, idToken]);
+		const payload = { ...newTask, userId: user?.sub };
 
-// Create task handler, passed to NewTaskForm
-  const handleCreateTask = (newTask: TaskAttributes) => {
-  if (!user?.sub) {
-    CustomToast({variant:"error", description:"User not authenticated", duration:3000})
-    return;
-  }
+		// Normalize dueDate like you do in your GET request
+		const normalizedTask: TaskAttributes = {
+			...newTask,
+			dueDate: newTask.dueDate ? new Date(newTask.dueDate) : new Date(0),
+		};
 
-  const payload = { ...newTask, userId: user?.sub };
+		// Optimistic UI update
+		setTasks((prev) => [...prev, normalizedTask]);
 
-  // Normalize dueDate like you do in your GET request
-  const normalizedTask: TaskAttributes = {
-    ...newTask,
-    dueDate: newTask.dueDate ? new Date(newTask.dueDate) : new Date(0),
-  };
+		// Persist to backend using Axios
+		axios
+			.post(`${API_BASE}/tasks`, payload, {
+				headers: { Authorization: `Bearer ${idToken} ` },
+			})
+			.then(() => {
+				CustomToast({
+					variant: "success",
+					description: "Task created",
+					duration: 3000,
+				});
+			})
+			.catch((error) => {
+				console.error("Error creating task:", error);
+				// Revert optimistic update if the backend call fails
+				setTasks((prev) => prev.filter((task) => task !== normalizedTask));
+				CustomToast({
+					variant: "error",
+					description: "Failed to create task",
+					duration: 3000,
+				});
+			});
+	};
 
-  // Optimistic UI update
-  setTasks(prev => [...prev, normalizedTask]);
+	const onDrop = async (
+		draggedTaskId: string,
+		targetStatus: StatusValue,
+		targetPosition: number
+	) => {
+		console.log(
+			`–– onDrop received → taskId: ${draggedTaskId}, status: ${targetStatus}, pos: ${targetPosition}`
+		);
 
-  // Persist to backend using Axios
-  axios.post(`${API_BASE}/tasks`, payload, {
-    headers: {Authorization: `Bearer ${idToken} `}
-  })
-    .then(() => {
-      CustomToast({variant:"success", description:"Task created", duration:3000})
-    })
-    .catch(error => {
-      console.error('Error creating task:', error);
-      // Revert optimistic update if the backend call fails
-      setTasks(prev => prev.filter(task => task !== normalizedTask));
-      CustomToast({variant:"error", description:"Failed to create task", duration:3000})
-    });
-};
+		const original = tasks.find((t) => t.id === draggedTaskId);
+		if (!original) {
+			setActiveCard(null);
+			return;
+		}
 
+		const withoutOriginal = tasks.filter((t) => t.id !== draggedTaskId);
+		const updatedTask: TaskAttributes = { ...original, status: targetStatus };
+		const peers = withoutOriginal.filter((t) => t.status === targetStatus);
 
+		let insertAt: number;
+		if (peers.length === 0) {
+			insertAt =
+				withoutOriginal.findIndex((t) => t.status === targetStatus) || 0;
+		} else {
+			insertAt =
+				targetPosition === 0
+					? withoutOriginal.findIndex((t) => t.id === peers[0].id)
+					: withoutOriginal.findIndex(
+							(t) => t.id === peers[targetPosition - 1].id
+					  ) + 1;
+		}
+		insertAt = Math.max(0, Math.min(withoutOriginal.length, insertAt));
 
+		const next = [
+			...withoutOriginal.slice(0, insertAt),
+			updatedTask,
+			...withoutOriginal.slice(insertAt),
+		];
 
-  const onDrop = async (
-  draggedTaskId: string,
-  targetStatus: StatusValue,
-  targetPosition: number
-) => {
-  console.log(
-    `–– onDrop received → taskId: ${draggedTaskId}, status: ${targetStatus}, pos: ${targetPosition}`
-  );
+		setTasks(next);
+		setActiveCard(null);
 
-  const original = tasks.find(t => t.id === draggedTaskId);
-  if (!original) {
-    setActiveCard(null);
-    return;
-  }
+		// 🔁 Sync with backend
+		try {
+			// const userSub = localStorage.getItem('userSub');
+			if (!user?.sub)
+				return CustomToast({
+					variant: "error",
+					description: "User not authenticated",
+					duration: 3000,
+				});
 
-  const withoutOriginal = tasks.filter(t => t.id !== draggedTaskId);
-  const updatedTask: TaskAttributes = { ...original, status: targetStatus };
-  const peers = withoutOriginal.filter(t => t.status === targetStatus);
+			await axios.patch(
+				`${API_BASE}/tasks`,
+				{
+					id: draggedTaskId,
+					userId: user.sub,
+					status: targetStatus,
+				},
+				{
+					headers: { Authorization: `Bearer ${idToken} ` },
+				}
+			);
+			CustomToast({
+				variant: "success",
+				description: "Task Status Updated",
+				duration: 3000,
+			});
+		} catch (err: any) {
+			const message =
+				err.response?.data?.error || err.message || "Could not reach server";
+			CustomToast({ variant: "error", description: message, duration: 3000 });
+			console.error("Status update failed:", err);
+		}
+	};
 
-  let insertAt: number;
-  if (peers.length === 0) {
-    insertAt = withoutOriginal.findIndex(t => t.status === targetStatus) || 0;
-  } else {
-    insertAt = targetPosition === 0
-      ? withoutOriginal.findIndex(t => t.id === peers[0].id)
-      : withoutOriginal.findIndex(t => t.id === peers[targetPosition - 1].id) + 1;
-  }
-  insertAt = Math.max(0, Math.min(withoutOriginal.length, insertAt));
+	const handleDeleteTask = async (taskId: string) => {
+		if (!user?.sub) {
+			CustomToast({
+				variant: "error",
+				description: "User not authenticated",
+				duration: 3000,
+			});
+			return;
+		}
 
-  const next = [
-    ...withoutOriginal.slice(0, insertAt),
-    updatedTask,
-    ...withoutOriginal.slice(insertAt),
-  ];
+		try {
+			const res = await axios.delete(`${API_BASE}/tasks`, {
+				headers: { Authorization: `Bearer ${idToken} ` },
+				data: {
+					taskId,
+					userId: user.sub,
+				},
+			});
+			console.log("taskID:", taskId, "userId", userSub);
 
-  setTasks(next);
-  setActiveCard(null);
+			if (res.status >= 200 && res.status < 300) {
+				setTasks((prev) => prev.filter((t) => t.id !== taskId));
+				CustomToast({
+					variant: "success",
+					description: "Task Deleted Successfully",
+					duration: 3000,
+				});
+			} else {
+				CustomToast({
+					variant: "error",
+					description: (res.data as any).error || "Failed to delete task",
+					duration: 3000,
+				});
+			}
+		} catch (err: any) {
+			const message =
+				err.response?.data?.error || err.message || "Something went wrong";
+			CustomToast({ variant: "error", description: message, duration: 3000 });
+			console.error(err);
+		}
+	};
 
-  // 🔁 Sync with backend
-  try {
-  // const userSub = localStorage.getItem('userSub');
-  if (!user?.sub) return CustomToast({variant:"error", description:"User not authenticated", duration:3000});
+	// Handle task click for editing
+	const handleTaskClick = (task: TaskAttributes) => {
+		console.log("Task clicked:", task); //
+		setActiveTask(task);
+		setIsEditing(true); // Set to edit mode
+		setIsFormOpen(true);
+	};
 
-  await axios.patch(`${API_BASE}/tasks`,{
-    id : draggedTaskId,
-    userId : user.sub,
-    status : targetStatus
-  },
-  {
-    headers: {Authorization: `Bearer ${idToken} `}
-  }
-  )
-  CustomToast({variant:"success", description:"Task Status Updated", duration:3000})
+	const todoTasks = useMemo(
+		() => tasks.filter((t) => t.status === STATUS_VALUES.PLANNED),
+		[tasks]
+	);
+	const doingTasks = useMemo(
+		() => tasks.filter((t) => t.status === STATUS_VALUES.IN_PROGRESS),
+		[tasks]
+	);
+	const doneTasks = useMemo(
+		() => tasks.filter((t) => t.status === STATUS_VALUES.COMPLETED),
+		[tasks]
+	);
 
-} catch (err:any) {
-  const message = err.response?.data?.error || err.message || 'Could not reach server'
-  CustomToast({variant:"error", description:message, duration:3000})
-  console.error('Status update failed:', err);
-}
-}
+	if (isLoading) return <LoaderUi />;
 
+	/** Edit */
+	const handleEditTask = async (updatedTask: TaskAttributes) => {
+		if (!user?.sub) {
+			CustomToast({
+				variant: "error",
+				description: "User not authenticated",
+				duration: 3000,
+			});
+			return;
+		}
 
-  const handleDeleteTask = async (taskId: string) => {
+		// 1️⃣ Optimistically update UI
+		setTasks((prev) =>
+			prev.map((t) =>
+				t.id === updatedTask.id
+					? { ...updatedTask, dueDate: new Date(updatedTask.dueDate) }
+					: t
+			)
+		);
+		setIsEditing(false);
 
-  if (!user?.sub) {
-    CustomToast({variant:"error", description:"User not authenticated", duration:3000})
-    return;
-  }
+		try {
+			// Normalize dueDate to ISO:
+			const isoDueDate = new Date(updatedTask.dueDate).toISOString();
 
-  try {
-    const res = await axios.delete(`${API_BASE}/tasks`,{
-      headers: {Authorization: `Bearer ${idToken} `},
-      data: {
-        taskId,
-        userId: user.sub
-      }
-    })
-    console.log("taskID:", taskId, "userId", userSub)
+			const patchPayload = {
+				id: updatedTask.id,
+				userId: user.sub,
+				task: updatedTask.task,
+				status: updatedTask.status,
+				priority: updatedTask.priority,
+				dueDate: isoDueDate,
+				description: updatedTask.description,
+				checklist: updatedTask.checklist,
+				showDescriptionOnCard: updatedTask.showDescriptionOnCard,
+				showChecklistOnCard: updatedTask.showChecklistOnCard,
+				tags: updatedTask.tags,
+			};
 
-    if (res.status >= 200 && res.status < 300) {
-      setTasks(prev => prev.filter(t => t.id !== taskId))
-      CustomToast({variant:"success", description:"Task Deleted Successfully", duration:3000})
+			await axios.patch(`${API_BASE}/tasks`, patchPayload, {
+				headers: { Authorization: `Bearer ${idToken}` },
+			});
 
-    } else {
-      CustomToast({variant:"error", description:(res.data as any).error || 'Failed to delete task', duration:3000})
-    }
-  } catch (err:any) {
-    const message = err.response?.data?.error || err.message || 'Something went wrong'
-    CustomToast({variant:"error", description:message, duration:3000})
-    console.error(err)
-  }
-};
+			CustomToast({
+				variant: "success",
+				description: "Task updated",
+				duration: 3000,
+			});
+		} catch (err: any) {
+			console.error("Update failed", err);
+			CustomToast({
+				variant: "error",
+				description: err.response?.data?.error || "Failed to update task",
+				duration: 3000,
+			});
+			// Roll back on error
+			setTasks((prev) =>
+				prev.map((t) => (t.id === updatedTask.id ? activeTask! : t))
+			);
+		}
+	};
 
-// Handle task click for editing
-  const handleTaskClick = (task: TaskAttributes) => {
-    console.log('Task clicked:', task); //
-    setActiveTask(task);
-    setIsEditing(true); // Set to edit mode
-    setIsFormOpen(true)
-  };
+	const handleToggleChecklistItem = async (
+		// Make it async
+		taskId: string,
+		itemId: string,
+		checked: boolean
+	) => {
+		let updatedTaskForBackend: TaskAttributes | undefined;
 
-  const todoTasks = useMemo(() => tasks.filter(t => t.status === STATUS_VALUES.PLANNED), [tasks]);
-  const doingTasks = useMemo(() => tasks.filter(t => t.status === STATUS_VALUES.IN_PROGRESS), [tasks]);
-  const doneTasks = useMemo(() => tasks.filter(t => t.status === STATUS_VALUES.COMPLETED), [tasks]);
+		// 1. Update local state and capture the updated task
+		setTasks((prevTasks) =>
+			prevTasks.map((task) => {
+				if (task.id === taskId) {
+					const newChecklist = task.checklist?.map((item) =>
+						item.id === itemId ? { ...item, completed: checked } : item
+					);
+					updatedTaskForBackend = {
+						// Capture the fully updated task
+						...task,
+						checklist: newChecklist,
+					};
+					return updatedTaskForBackend;
+				}
+				return task;
+			})
+		);
 
-  if (isLoading) return <LoaderUi/>
+		// 2. If the task was found and updated, persist to backend
+		if (updatedTaskForBackend && user?.sub && idToken) {
+			try {
+				// Prepare only the necessary fields for the patch payload
+				// Your backend might only need the checklist, or the whole task
+				const patchPayload = {
+					id: updatedTaskForBackend.id,
+					userId: user.sub,
+					checklist: updatedTaskForBackend.checklist, // Send the updated checklist
+					// You might need to send other fields if your backend expects them
+					// or if other logic relies on a full task update.
+					// For example, if you want to be consistent with handleEditTask:
+					// task: updatedTaskForBackend.task,
+					// status: updatedTaskForBackend.status,
+					// priority: updatedTaskForBackend.priority,
+					// dueDate: new Date(updatedTaskForBackend.dueDate).toISOString(),
+					// description: updatedTaskForBackend.description,
+					// showDescriptionOnCard: updatedTaskForBackend.showDescriptionOnCard,
+					// showChecklistOnCard: updatedTaskForBackend.showChecklistOnCard,
+					// tags: updatedTaskForBackend.tags,
+				};
 
+				await axios.patch(`${API_BASE}/tasks`, patchPayload, {
+					headers: { Authorization: `Bearer ${idToken}` },
+				});
 
-/** Edit */
-const handleEditTask = async (updatedTask: TaskAttributes) => {
-  if (!user?.sub) {
-    CustomToast({variant:"error", description:"User not authenticated", duration:3000})
-    return;
-  }
+				// Optional: Show a success toast
+				CustomToast({
+					variant: "success",
+					description: "Checklist item updated.",
+					duration: 2000,
+				});
+			} catch (err: any) {
+				console.error("Checklist update failed", err);
+				CustomToast({
+					variant: "error",
+					description:
+						err.response?.data?.error || "Failed to update checklist item.",
+					duration: 3000,
+				});
+				// Optional: Roll back the optimistic update if the API call fails
+				// This would involve refetching tasks or reverting to the previous state
+				// For simplicity, this example doesn't include a full rollback here,
+				// but you have it in handleEditTask as a reference.
+				setTasks((prevTasks) =>
+					prevTasks.map((task) =>
+						task.id === taskId
+							? {
+									...task,
+									checklist: task.checklist?.map(
+										(item) =>
+											item.id === itemId
+												? { ...item, completed: !checked }
+												: item // Revert the change
+									),
+							  }
+							: task
+					)
+				);
+			}
+		} else if (!user?.sub || !idToken) {
+			CustomToast({
+				variant: "error",
+				description: "User not authenticated. Cannot update checklist.",
+				duration: 3000,
+			});
+		}
+	};
 
-  // 1️⃣ Optimistically update UI
-  setTasks(prev =>
-    prev.map(t =>
-      t.id === updatedTask.id
-        ? { ...updatedTask, dueDate: new Date(updatedTask.dueDate) }
-        : t
-    )
-  );
-  setIsEditing(false);
+	return (
+		<div className="flex flex-col gap-6 p-4 md:p-6 h-screen overflow-hidden">
+			<div className="flex justify-end">
+				<NewTaskForm
+					mode={isEditing ? "edit" : "create"}
+					initialTask={activeTask ?? undefined}
+					opened={isFormOpen}
+					onOpenChange={(open) => {
+						setIsFormOpen(open);
+						if (!open) {
+							// reset edit mode when you close
+							setIsEditing(false);
+							setActiveTask(null);
+						}
+					}}
+					onCreate={(task) => {
+						if (isEditing) {
+							// call your update API
+							handleEditTask(task);
+						} else {
+							handleCreateTask(task);
+						}
+						setIsFormOpen(false);
+					}}
+				/>
+			</div>
 
-  try {
-    // Normalize dueDate to ISO:
-    const isoDueDate = new Date(updatedTask.dueDate).toISOString();
-
-    const patchPayload = {
-      id: updatedTask.id,
-      userId: user.sub,
-      task: updatedTask.task,
-      status: updatedTask.status,
-      priority: updatedTask.priority,
-      dueDate: isoDueDate,
-      description: updatedTask.description,
-      checklist: updatedTask.checklist,
-      showDescriptionOnCard: updatedTask.showDescriptionOnCard,
-      showChecklistOnCard: updatedTask.showChecklistOnCard,
-      tags: updatedTask.tags,
-    };
-
-    await axios.patch(`${API_BASE}/tasks`, patchPayload, {
-      headers: { Authorization: `Bearer ${idToken}` },
-    });
-
-    CustomToast({variant:"success", description:"Task updated", duration:3000})
-  } catch (err: any) {
-    console.error('Update failed', err);
-    CustomToast({variant:"error", description:err.response?.data?.error || 'Failed to update task', duration:3000})
-    // Roll back on error
-    setTasks(prev =>
-      prev.map(t =>
-        t.id === updatedTask.id ? activeTask! : t
-      )
-    );
-  }
-};
-
-
-
-  return (
-    <div className="flex flex-col gap-6 p-4 md:p-6 h-screen overflow-hidden">
-      <div className="flex justify-end">
-  <NewTaskForm
-    mode={isEditing ? 'edit' : 'create'}
-    initialTask={activeTask ?? undefined}
-    opened={isFormOpen}
-    onOpenChange={(open) => {
-      setIsFormOpen(open)
-      if (!open) {
-        // reset edit mode when you close
-        setIsEditing(false)
-        setActiveTask(null)
-      }
-    }}
-    onCreate={(task) => {
-      if (isEditing) {
-        // call your update API
-        handleEditTask(task)
-      } else {
-        handleCreateTask(task)
-      }
-      setIsFormOpen(false)
-    }}
-  />
-</div>
-    
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow min-h-0">
-        <Column
-          title="Planned"
-          icon={ListTodo}
-          statusValue={STATUS_VALUES.PLANNED}
-          tasks={todoTasks}
-          bgColor="bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
-          shadowColor="shadow-purple-100/50 dark:shadow-purple-900/30"
-          onDeleteTask={handleDeleteTask}
-          setActiveCard={setActiveCard}
-          onDrop={onDrop}
-          activeCard={activeCard}
-          onClickTask={handleTaskClick}  // Pass the click handler
-        />
-        <Column
-          title="In-Progress"
-          icon={Loader}
-          statusValue={STATUS_VALUES.IN_PROGRESS}
-          tasks={doingTasks}
-          bgColor="bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
-          shadowColor="shadow-amber-100/50 dark:shadow-amber-900/30"
-          onDeleteTask={handleDeleteTask}
-          setActiveCard={setActiveCard}
-          onDrop={onDrop}
-          activeCard={activeCard}
-          onClickTask={handleTaskClick}  // Pass the click handler
-        />
-        <Column
-          title="Completed"
-          icon={CheckCircle}
-          statusValue={STATUS_VALUES.COMPLETED}
-          tasks={doneTasks}
-          bgColor="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
-          shadowColor="shadow-emerald-100/50 dark:shadow-emerald-900/30"
-          onDeleteTask={handleDeleteTask}
-          setActiveCard={setActiveCard}
-          onDrop={onDrop}
-          activeCard={activeCard}
-          onClickTask={handleTaskClick}  // Pass the click handler
-        />
-      </div>
-    </div>
-  );
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow min-h-0  ">
+				<Column
+					title="Planned"
+					icon={ListTodo}
+					statusValue={STATUS_VALUES.PLANNED}
+					tasks={todoTasks}
+					bgColor="bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
+					shadowColor="shadow-purple-100/50 dark:shadow-purple-900/30"
+					onDeleteTask={handleDeleteTask}
+					setActiveCard={setActiveCard}
+					onDrop={onDrop}
+					activeCard={activeCard}
+					onClickTask={handleTaskClick} // Pass the click handler
+					onToggleChecklistItem={handleToggleChecklistItem}
+				/>
+				<Column
+					title="In-Progress"
+					icon={Loader}
+					statusValue={STATUS_VALUES.IN_PROGRESS}
+					tasks={doingTasks}
+					bgColor="bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+					shadowColor="shadowcolor-amber-100/50 dark:shadow-amber-900/30"
+					onDeleteTask={handleDeleteTask}
+					setActiveCard={setActiveCard}
+					onDrop={onDrop}
+					activeCard={activeCard}
+					onClickTask={handleTaskClick} // Pass the click handler
+					onToggleChecklistItem={handleToggleChecklistItem}
+				/>
+				<Column
+					title="Completed"
+					icon={CheckCircle}
+					statusValue={STATUS_VALUES.COMPLETED}
+					tasks={doneTasks}
+					bgColor="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+					shadowColor="shadow-emerald-100/50 dark:shadow-emerald-900/30"
+					onDeleteTask={handleDeleteTask}
+					setActiveCard={setActiveCard}
+					onDrop={onDrop}
+					activeCard={activeCard}
+					onClickTask={handleTaskClick} // Pass the click handler
+					onToggleChecklistItem={handleToggleChecklistItem}
+				/>
+			</div>
+		</div>
+	);
 };
 
 export default TinuMind;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // ./TaskManager.tsx (TinuMind component - Updated)
 // //import { startTransition } from 'react';
@@ -384,7 +494,6 @@ export default TinuMind;
 // import { fetchAuthSession } from "aws-amplify/auth";
 // import { toast } from "sonner";
 
-
 // const API_BASE = process.env.REACT_APP_API_URL;
 
 // // Define status values using 'as const' for stricter type checking
@@ -395,8 +504,6 @@ export default TinuMind;
 // } as const;
 
 // type StatusValue = 'planned' | 'in-progress' | 'completed';
-
-
 
 // // --- Helper Functions ---
 // const getCurrentUserEmail = async (): Promise<string | null> => {
@@ -482,7 +589,6 @@ export default TinuMind;
 //   const doingTasks = useMemo(() => tasks.filter(task => task.status === STATUS_VALUES.IN_PROGRESS), [tasks]);
 //   const doneTasks = useMemo(() => tasks.filter(task => task.status === STATUS_VALUES.COMPLETED), [tasks]);
 
-
 //   // Handler for deleting a task
 //   const handleDeleteTask = (taskId: string) => {
 //     setTasks(currentTasks => currentTasks.filter(task => task.id !== taskId));
@@ -562,8 +668,6 @@ export default TinuMind;
 //   setActiveCard(null);
 // };
 
-
-
 //   // Render Loading or Task Board
 //   if (isLoading) {
 //     return <div className="flex justify-center items-center h-screen">Loading tasks...</div>; // Or a spinner component
@@ -620,5 +724,3 @@ export default TinuMind;
 // };
 
 // export default TinuMind;
-
-

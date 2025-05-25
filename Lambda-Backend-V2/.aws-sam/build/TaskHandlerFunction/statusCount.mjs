@@ -50,54 +50,60 @@ export async function handler(event) {
 
   try {
     const db = await connectToDatabase();
-    const tasksCollection = db.collection('Tasks'); // Get your tasks collection by name
+    const tasksCollection = db.collection(process.env.COLLECTION_NAME || 'Tasks');
 
     console.log(`Fetching task stats for userId: ${userId}`);
 
     // 1. Get counts for each status using aggregate
     const statusCountsPipeline = [
-      { $match: { userId: userId } }, // Match documents for the given user
+      { $match: { userId: userId } },
       {
         $group: {
-          _id: "$status", // Group by status
-          count: { $sum: 1 } // Count the tasks for each status
+          _id: "$status",
+          count: { $sum: 1 }
         }
       }
     ];
-    const statusResultsCursor = tasksCollection.aggregate(statusCountsPipeline);
-    const statusResults = await statusResultsCursor.toArray(); // Convert cursor to array
+    const statusResults = await tasksCollection.aggregate(statusCountsPipeline).toArray();
 
     const stats = {
       Planned: 0,
-      InProgress: 0, // Will be mapped from "In-Progress"
+      InProgress: 0,
       Completed: 0,
-      late: 0
+      late: 0 // Initialize late count
     };
 
-    // Normalize status names and map counts to stats object
     statusResults.forEach(item => {
-      if (item._id === 'Planned') stats.Planned = item.count;
-      else if (item._id === 'In Progress' || item._id === 'In-Progress') stats.InProgress = item.count;
-      else if (item._id === 'Completed') stats.Completed = item.count;
+      if (!item._id) return; // Skip if _id is null or undefined
+      const statusKey = item._id.toLowerCase();
+      if (statusKey === 'planned') stats.Planned = item.count;
+      else if (statusKey === 'in progress' || statusKey === 'in-progress') stats.InProgress += item.count; // Use += and ensure it's initialized to 0
+      else if (statusKey === 'completed') stats.Completed = item.count;
     });
 
     // 2. Get count of late tasks
     const now = new Date();
     console.log('Current Time (Now):', now);
 
+    const nonLateableStatuses = ['Completed']; 
+
     const lateTasksCount = await tasksCollection.countDocuments({
       userId: userId,
-      status: { $ne: 'Completed' },
-      dueDate: { $lt: now }
+      status: { $nin: nonLateableStatuses },
+      dueDate: { 
+        $lt: now,
+        $ne: null
+      } 
     });
+    
+    console.log('Late Tasks Count:', lateTasksCount);
 
-console.log('Late Tasks Count:', lateTasksCount);
-
+    stats.late = lateTasksCount; // Assign the calculated count
 
     console.log(`Stats for userId ${userId}:`, stats);
 
     return {
-      statusCode: 200, // OK
+      statusCode: 200,
       headers: CORS_HEADERS,
       body: JSON.stringify(stats),
     };

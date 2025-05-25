@@ -16,6 +16,7 @@ import DashboardPage from "@/Pages/Dashboard";
 import LoaderUi from "@/components/TaskManager_V2/Loader";
 import Notes from "@/Pages/Notes";
 import FeedbackPage from "@/Pages/Feedback";
+import PomodoroTimerPage from "@/Pages/PomodoroTimer";
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
@@ -46,7 +47,7 @@ function AppRoutes() {
           <Route path="tasks" element={<TinuMindPage />} />
           <Route path="notes" element={<Notes />} />
           <Route path="feedback" element={<FeedbackPage />} />
-          
+          <Route path="pomodoro" element={<PomodoroTimerPage />} />
         </Route>
 
 

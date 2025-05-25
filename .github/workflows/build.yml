@@ -57,12 +57,17 @@ jobs:
         working-directory: Tinu-taskmanager
         run: aws s3 sync Taskmanager-build s3://$BUCKET_NAME --delete
 
+      - name: Debug CloudFront Invalidation Vars
+        run: |
+          echo "CLOUDFRONT_ID=$CLOUDFRONT_ID"
+          echo "Caller reference: invalidate-$(date +%s)"
+
       - name: Invalidate cloudfront distribution cache
         run: |
           aws cloudfront create-invalidation \
-          --distribution-id $CLOUDFRONT_ID \
-          --paths "/*" \
-          --caller-reference "invalidate-$(date +%s)"
+            --distribution-id "$CLOUDFRONT_ID" \
+            --paths "/*" \
+            --caller-reference "invalidate-$(date +%s)"
 
       ### Notification
       - name: Send success email via Mailgun

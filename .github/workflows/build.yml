@@ -62,12 +62,18 @@ jobs:
           echo "CLOUDFRONT_ID=$CLOUDFRONT_ID"
           echo "Caller reference: invalidate-$(date +%s)"
 
-      - name: Invalidate cloudfront distribution cache
+      - name: Invalidate CloudFront cache
         run: |
+          TIMESTAMP=$(date +%s)
           aws cloudfront create-invalidation \
             --distribution-id "$CLOUDFRONT_ID" \
-            --paths "/*" \
-            --caller-reference "invalidate-$(date +%s)"
+            --invalidation-batch '{
+              "Paths": {
+                "Quantity": 1,
+                "Items": ["/*"]
+              },
+              "CallerReference": "'"$TIMESTAMP"'"
+            }'
 
       ### Notification
       - name: Send success email via Mailgun

@@ -34,8 +34,8 @@ const chartConfig = {
     label: "In_Progress",
     color: "hsl(var(--chart-2))",
   },
-  Not_Started: {
-    label: "Not_Started",
+  Planned: {
+    label: "Planned",
     color: "hsl(var(--chart-3))",
   },
   Completed: {
@@ -46,7 +46,7 @@ const chartConfig = {
 
 const legendOrder: (keyof Omit<typeof chartConfig, 'count'>)[] = [
   "In_Progress",
-  "Not_Started",
+  "Planned",
   "Completed",
   "Late",
 ];
@@ -55,7 +55,7 @@ export function DonutChart() {
   const [chartData, setChartData] = useState([
     { status: "Late", count: 0, fill: "var(--color-Late)" },
     { status: "In_Progress", count: 0, fill: "var(--color-In_Progress)" },
-    { status: "Not_Started", count: 0, fill: "var(--color-Not_Started)" },
+    { status: "Planned", count: 0, fill: "var(--color-Planned)" },
     { status: "Completed", count: 0, fill: "var(--color-Completed)" },
   ])
   const [loading, setLoading] = useState(true)
@@ -82,7 +82,7 @@ export function DonutChart() {
           setChartData([
             { status: "Late", count: response.data.late, fill: "var(--color-Late)" },
             { status: "In_Progress", count: response.data.InProgress, fill: "var(--color-In_Progress)" },
-            { status: "Not_Started", count: response.data.Planned, fill: "var(--color-Not_Started)" },
+            { status: "Planned", count: response.data.Planned, fill: "var(--color-Planned)" },
             { status: "Completed", count: response.data.Completed, fill: "var(--color-Completed)" },
           ])
         }

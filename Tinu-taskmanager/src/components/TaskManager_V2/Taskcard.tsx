@@ -64,7 +64,7 @@ const TaskCard = ({
 		setIsDragging(false)
 	};
 
-	const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+	const handleClick = () => {
         // Only trigger onClick if not currently dragging
         if (!isDragging) {
             onClick();

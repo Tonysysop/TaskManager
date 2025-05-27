@@ -11,6 +11,7 @@ const DropArea = ({ onDrop }: DropAreaProps) => {
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = "move"
     if (!isOver) setIsOver(true);
   };
   const handleDragLeave = () => {

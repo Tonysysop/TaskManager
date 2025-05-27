@@ -55,6 +55,7 @@ const Column: React.FC<ColumnProps> = ({
 
 	const handleColDragOver = (e: React.DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
+		e.dataTransfer.dropEffect="move"
 		setColOver(true);
 	};
 	const handleColDragLeave = () => setColOver(false);
@@ -65,7 +66,7 @@ const Column: React.FC<ColumnProps> = ({
 
 	return (
 		<div
-			className={`flex flex-col flex-1 min-w-[300px] max-w-[400px] bg-card rounded-lg shadow-lg ${shadowColor} p-4`}
+			className={`flex flex-col flex-1 min-w-[300px] max-w-[400px] bg-card rounded-lg shadow-lg ${shadowColor} p-4 snap-center`}
 		>
 			<div className={`flex items-center gap-2 mb-4 p-2 rounded-md ${bgColor}`}>
 				<Icon size={20} />
@@ -80,7 +81,7 @@ const Column: React.FC<ColumnProps> = ({
 				onDragEnter={handleColDragOver}
 				onDragLeave={handleColDragLeave}
 				onDrop={handleColDrop}
-				className={`overflow-y-auto  space-y-1 max-h-[calc(100vh-220px)] custom-scrollbar pr-1 transition-colors ${
+				className={`overflow-y-auto  space-y-1 max-h-[calc(100vh-220px)] custom-scrollbar pr-1 transition-colors flex-grow ${
 					colOver ? "bg-violet-400/20" : ""
 				}`}
 			>

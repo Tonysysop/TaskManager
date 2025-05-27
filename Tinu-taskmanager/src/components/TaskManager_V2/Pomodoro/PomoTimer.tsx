@@ -167,13 +167,12 @@ const PomodoroTimer = () => {
 
 	// Handle timer completion
 	const handleTimerComplete = () => {
-		const audio = new Audio("/notification.mp3");
+		const audio = new Audio("/pomodoro_alarm.mp3");
 		audio.play().catch(() => {
 			/* User hasn't interacted, or audio blocked */
 		});
 
 		setTimerEndTime(null); // Clear the end time
-
 		if (timerState === "focus") {
 			setIsFlashing(true);
 			setTimeout(() => setIsFlashing(false), 1000);

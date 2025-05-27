@@ -48,15 +48,28 @@ const TaskCard = ({
 	onClick,
 	handleChecklistToggle,
 }: TaskCardProps) => {
+	const [isDragging, setIsDragging] = React.useState(false);
+
 	const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
 		setActiveCard(task);
 		e.dataTransfer.setData("text/plain", task.id);
 		e.dataTransfer.effectAllowed = "move";
+		setIsDragging(true)
 	};
+
+	
 
 	const handleDragEnd = () => {
 		setActiveCard(null);
+		setIsDragging(false)
 	};
+
+	const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        // Only trigger onClick if not currently dragging
+        if (!isDragging) {
+            onClick();
+        }
+    };
 
 	const onChecklistItemToggle = (itemId: string, checked: boolean) => {
 		handleChecklistToggle(itemId, checked);
@@ -108,25 +121,18 @@ const TaskCard = ({
 		}
 	};
 
-
-  const TooltipBackgroundColor = () => {
-    switch (columnType) {
-      case "Planned":
-        return "text-purple-900 bg-purple-200 dark:bg-purple-900 dark:text-purple-200";
-      case "In-Progress":
-        return "text-amber-900 bg-amber-200 dark:bg-amber-900 dark:text-amber-300";
-      case "Completed":
-        return "text-emerald-900 bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-100";
-      default:
-        return "bg-gray-700"; // A default background color
-    }
-  };
-
-
-
-
-
-
+	const TooltipBackgroundColor = () => {
+		switch (columnType) {
+			case "Planned":
+				return "text-purple-900 bg-purple-200 dark:bg-purple-900 dark:text-purple-200";
+			case "In-Progress":
+				return "text-amber-900 bg-amber-200 dark:bg-amber-900 dark:text-amber-300";
+			case "Completed":
+				return "text-emerald-900 bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-100";
+			default:
+				return "bg-gray-700"; // A default background color
+		}
+	};
 
 	const formattedDueDate =
 		task.dueDate instanceof Date
@@ -136,7 +142,7 @@ const TaskCard = ({
 	return (
 		<div
 			className={cn(
-				"bg-card border border-border rounded-lg p-4 shadow-md transition-all duration-200 cursor-move active:cursor-grabbing",
+				"bg-card border border-border rounded-lg p-4 shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing",
 				getShadowColor(),
 				activeCard?.id === task.id
 					? "opacity-50 scale-95 ring-2 ring-primary shadow-lg"
@@ -146,7 +152,7 @@ const TaskCard = ({
 			draggable
 			onDragStart={handleDragStart}
 			onDragEnd={handleDragEnd}
-			onClick={onClick}
+			onClick={handleClick}
 		>
 			<div className="space-y-3">
 				<div className="flex items-center justify-between">
@@ -215,10 +221,9 @@ const TaskCard = ({
 								side="top"
 								align="center"
 								className={cn(
-                  "max-w-xs whitespace-normal break-words p-2",
-                  TooltipBackgroundColor()
-                  
-                )}
+									"max-w-xs whitespace-normal break-words p-2",
+									TooltipBackgroundColor()
+								)}
 							>
 								<p className="text-xs">{task.description}</p>
 							</TooltipContent>

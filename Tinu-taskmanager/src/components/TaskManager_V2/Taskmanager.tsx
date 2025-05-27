@@ -434,7 +434,8 @@ const TinuMind: React.FC = () => {
 				/>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow min-h-0  ">
+			<div className="overflow-x-auto md:overflow-x-hidden flex space-x-4 px-4 scroll-smooth snap-x snap-mandatory md:grid md:grid-cols-3 pb-4">
+				
 				<Column
 					title="Planned"
 					icon={ListTodo}
@@ -464,6 +465,7 @@ const TinuMind: React.FC = () => {
 					onToggleChecklistItem={handleToggleChecklistItem}
 				/>
 				<Column
+					
 					title="Completed"
 					icon={CheckCircle}
 					statusValue={STATUS_VALUES.COMPLETED}

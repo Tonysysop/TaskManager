@@ -103,22 +103,22 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
 
       {/* Glowing dot at progress end */}
       {progress > 0 && (
-        <div
-          className="absolute w-4 h-4 rounded-full animate-pulse"
-          style={{
-            background: `radial-gradient(circle, ${colors.primary}, ${colors.secondary})`,
-            boxShadow: `0 0 12px ${colors.primary}80`,
-            top: "50%",
-            left: "50%",
-            transform: `
-              translate(-50%, -50%) 
-              rotate(${(progress / 100) * 360 - 90}deg) 
-              translateY(-${radius + 20}px)
-            `,
-            transformOrigin: "center",
-          }}
-        />
-      )}
+  <div
+    className="absolute w-3 h-3 sm:w-4 sm:h-4 rounded-full animate-pulse" // <--- Changes here
+    style={{
+      background: `radial-gradient(circle, ${colors.primary}, ${colors.secondary})`,
+      boxShadow: `0 0 12px ${colors.primary}80`,
+      top: "50%",
+      left: "50%",
+      transform: `
+        translate(-50%, -50%)
+        rotate(${(progress / 100) * 360 - 90}deg)
+        translateY(-${radius + 20}px)
+      `,
+      transformOrigin: "center",
+    }}
+  />
+)}
     </div>
   );
 };

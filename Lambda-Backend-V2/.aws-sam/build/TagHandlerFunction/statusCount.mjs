@@ -2,7 +2,7 @@ import { MongoClient } from 'mongodb';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Amz-Security-Token',
+  'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Amz-Security-Token,traceparent,tracestate',
   'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PATCH,DELETE',
 };
 

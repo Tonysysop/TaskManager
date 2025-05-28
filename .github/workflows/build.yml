@@ -30,6 +30,7 @@ jobs:
         working-directory: Tinu-taskmanager
         run: |
           echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env
+          echo "VITE_API_KEY=${{ secrets.VITE_API_KEY }}" >> .env
           npm ci --legacy-peer-deps
           npm run build -- --outDir Taskmanager-build
 

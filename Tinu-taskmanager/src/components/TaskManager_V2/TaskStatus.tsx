@@ -43,7 +43,7 @@ const TaskStatus = ({ status, className }: TaskStatusProps) => {
   const { icon: Icon, text, color } = getStatusConfig();
 
   return (
-    <div className={cn('flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full w-fit', color, className)}>
+    <div className={cn('flex items-center gap-1.5 text-sm font-medium px-2.5 py-1 rounded-full w-fit', color, className)}>
       <Icon size={14} className="shrink-0" />
       <span>{text}</span>
     </div>

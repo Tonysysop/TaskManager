@@ -66,7 +66,7 @@ const Column: React.FC<ColumnProps> = ({
 
 	return (
 		<div
-			className={`flex flex-col flex-1 min-w-[300px] max-w-[400px] bg-card rounded-lg shadow-lg ${shadowColor} p-4 snap-center`}
+			className={`flex flex-col flex-1 min-w-[303px] max-w-[400px] bg-card rounded-lg shadow-lg ${shadowColor} p-3 snap-center`}
 		>
 			<div className={`flex items-center gap-2 mb-4 p-2 rounded-md ${bgColor}`}>
 				<Icon size={20} />

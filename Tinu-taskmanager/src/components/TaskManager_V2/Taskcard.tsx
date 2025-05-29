@@ -246,7 +246,7 @@ const TaskCard = ({
 						{/* Checklist */}
 						<ul className="space-y-1">
 							{task.checklist.map((item) => (
-								<li key={item.id} className="flex items-center gap-2 text-xs">
+								<li key={item.id} className="flex text-muted-foreground items-center gap-2 text-sm">
 									<Checkbox
 										className="cursor-pointer data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 dark:data-[state=checked]:bg-purple-600 dark:data-[state=checked]:border-purple-600 dark:data-[state=unchecked]:bg-transparent dark:data-[state=unchecked]:border-gray-500"
 										checked={item.completed}

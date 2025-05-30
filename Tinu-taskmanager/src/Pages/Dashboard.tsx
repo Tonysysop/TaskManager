@@ -8,26 +8,38 @@ import {
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import { isToday, isThisWeek, isThisMonth, parseISO } from "date-fns";
+import {
+	isToday,
+	isThisWeek,
+	isThisMonth,
+	parseISO,
+	subMonths,
+} from "date-fns"; // Make sure subMonths is imported if used directly here
 import { Calendar, Clock, CalendarDays, TrendingUp } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import axios from "axios"; // Import axios
+import React, { useEffect, useState, useCallback } from "react";
+import axios from "axios";
 import { useAuth } from "@/Context/AuthContext";
 import Spinner1 from "@/components/spinner";
+import { TaskAttributes } from "@/types/TaskAttributes";
+import { useArchiveManager } from "@/hooks/useArchiveManager";
+import ArchiveManager from "@/components/TaskManager_V2/ArchiveManager/ArchiveManager";
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
-interface Task {
+interface DashboardTask {
 	id: string;
-	title: string; // Mapped from 'task' field in DB
+	title: string;
 	status: string;
 	dueDate: string;
+	archived?: boolean;
+	archivedAt?: Date | string;
+	completedAt?: Date | string;
 }
 
 interface TaskCardProps {
 	title: string;
 	icon: React.ComponentType<{ className?: string }>;
-	tasks: Task[];
+	tasks: DashboardTask[];
 	bgColorClass: string;
 	iconBgClass: string;
 	textColorClass: string;
@@ -69,7 +81,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 							<span
 								className={`px-2 py-1 text-xs font-semibold rounded-full ${
 									task.status.toLowerCase() === "in-progress"
-										? "bg-amber-100 text-amber-700" // Handle potential case variations
+										? "bg-amber-100 text-amber-700"
 										: task.status.toLowerCase() === "completed"
 										? "bg-emerald-100 text-emerald-700"
 										: task.status.toLocaleLowerCase() === "planned"
@@ -88,20 +100,128 @@ const TaskCard: React.FC<TaskCardProps> = ({
 };
 
 export default function DashboardPage() {
-	const { idToken, user } = useAuth(); // Get token and user info
+	const { idToken, user } = useAuth();
 
-	const [tasksDueToday, setTasksDueToday] = useState<Task[]>([]);
-	const [tasksDueThisWeek, setTasksDueThisWeek] = useState<Task[]>([]);
-	const [tasksDueThisMonth, setTasksDueThisMonth] = useState<Task[]>([]);
+	// State to hold ALL tasks fetched from the DB
+	const [allTasks, setAllTasks] = useState<TaskAttributes[]>([]); // **INITIALIZED TO EMPTY ARRAY**
+	const [tasksDueToday, setTasksDueToday] = useState<DashboardTask[]>([]);
+	const [tasksDueThisWeek, setTasksDueThisWeek] = useState<DashboardTask[]>([]);
+	const [tasksDueThisMonth, setTasksDueThisMonth] = useState<DashboardTask[]>(
+		[]
+	);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
+	const updateTaskCallback = useCallback(
+		async (taskId: string, updates: Partial<TaskAttributes>) => {
+			setAllTasks((prev) =>
+				prev.map((t) =>
+					t.id === taskId
+						? {
+								...t,
+								...updates,
+								dueDate:
+									updates.dueDate !== undefined
+										? updates.dueDate instanceof Date
+											? updates.dueDate
+											: new Date(updates.dueDate)
+										: t.dueDate,
+								completedAt:
+									updates.completedAt !== undefined
+										? updates.completedAt instanceof Date
+											? updates.completedAt
+											: new Date(updates.completedAt)
+										: t.completedAt,
+								archivedAt:
+									updates.archivedAt !== undefined
+										? updates.archivedAt instanceof Date
+											? updates.archivedAt
+											: new Date(updates.archivedAt)
+										: t.archivedAt,
+						  }
+						: t
+				)
+			);
+
+			if (!user?.sub || !idToken) {
+				console.error("User not authenticated. Cannot update task.");
+				return;
+			}
+
+			const payload: Partial<TaskAttributes> & { id: string; userId: string } =
+				{
+					id: taskId,
+					userId: user.sub,
+					...updates,
+				};
+			if (payload.dueDate instanceof Date)
+				payload.dueDate = payload.dueDate.toISOString();
+			if (payload.completedAt instanceof Date)
+				payload.completedAt = payload.completedAt.toISOString();
+			if (payload.archivedAt instanceof Date)
+				payload.archivedAt = payload.archivedAt.toISOString();
+
+			try {
+				await axios.patch(`${API_BASE}/tasks`, payload, {
+					headers: { Authorization: `Bearer ${idToken}` },
+				});
+			} catch (error: any) {
+				console.error(
+					"Backend update failed from DashboardPage updateTaskCallback:",
+					error
+				);
+			}
+		},
+		[setAllTasks, user?.sub, idToken]
+	);
+
+	const deleteTaskFromMainListCallback = useCallback(
+		async (taskId: string) => {
+			setAllTasks((prev) => prev.filter((t) => t.id !== taskId));
+
+			if (!user?.sub || !idToken) {
+				console.error("User not authenticated. Cannot delete task.");
+				return;
+			}
+
+			try {
+				await axios.delete(`${API_BASE}/tasks`, {
+					headers: { Authorization: `Bearer ${idToken}` },
+					data: { taskId, userId: user.sub },
+				});
+			} catch (error: any) {
+				console.error(
+					"Backend delete failed from DashboardPage deleteTaskFromMainListCallback:",
+					error
+				);
+			}
+		},
+		[setAllTasks, user?.sub, idToken]
+	);
+
+	// CALL useArchiveManager FOR ITS SIDE EFFECTS ONLY
+	// It will automatically trigger updateTaskCallback for archival
+	useArchiveManager(
+		allTasks, // Pass the main `allTasks` state to the hook
+		updateTaskCallback,
+		deleteTaskFromMainListCallback
+	);
+
+	// --- Filter archived tasks directly from allTasks for ArchiveManager prop ---
+	const archivedTasks = allTasks.filter((task) => task.archived);
+
+	console.log("[DashboardPage] All tasks fetched:", allTasks);
+	console.log(
+		"[DashboardPage] Archived tasks calculated in Dashboard:",
+		archivedTasks
+	);
+	// --- End of Functions for useArchiveManager ---
+
 	useEffect(() => {
-		// Only fetch if user and token are available
 		if (!user?.sub || !idToken) {
-			setIsLoading(false); // Not loading if no user/token
+			setIsLoading(false);
 			if (!user || !idToken) {
-				setError("User not authenticated. Please log in."); // Optional: set an error if auth details are missing
+				setError("User not authenticated. Please log in.");
 			}
 			return;
 		}
@@ -115,29 +235,48 @@ export default function DashboardPage() {
 					headers: { Authorization: `Bearer ${idToken}` },
 				});
 
-				// The actual tasks are likely in response.data
-				const fetchedTasksFromDB: any[] = response.data;
+				const fetchedTasksFromDB: TaskAttributes[] = response.data;
 
-				// Map database fields to our Task interface
-				const mappedTasks: Task[] = fetchedTasksFromDB.map((dbTask) => ({
-					id: dbTask.id, // Assuming the string id: "5a2a5f18-9a37-4f4f-9e58-40cf63f749e9"
-					title: dbTask.task, // 'task' field from DB to 'title'
-					status: dbTask.status,
-					dueDate: dbTask.dueDate,
-				}));
-
-				const nonCompletedTasks = mappedTasks.filter(
-					(task) => task.status && task.status.toLowerCase() !== "completed"
+				// Normalize date fields to Date objects as soon as they are fetched
+				const normalizedTasks: TaskAttributes[] = fetchedTasksFromDB.map(
+					(dbTask) => ({
+						...dbTask,
+						dueDate: dbTask.dueDate ? new Date(dbTask.dueDate) : new Date(0),
+						completedAt: dbTask.completedAt
+							? new Date(dbTask.completedAt)
+							: undefined,
+						archivedAt: dbTask.archivedAt
+							? new Date(dbTask.archivedAt)
+							: undefined,
+					})
 				);
 
-				// Filter NON-COMPLETED tasks by due date
+				setAllTasks(normalizedTasks); // Update the `allTasks` state
+
+				const activeTasks = normalizedTasks.filter(
+					(task) =>
+						task.status &&
+						task.status.toLowerCase() !== "completed" &&
+						!task.archived
+				);
+
+				const dashboardFormattedTasks = activeTasks.map((task) => ({
+					id: task.id,
+					title: task.task,
+					status: task.status,
+					dueDate:
+						task.dueDate instanceof Date
+							? task.dueDate.toISOString()
+							: task.dueDate,
+				}));
+
 				setTasksDueToday(
-					nonCompletedTasks.filter(
+					dashboardFormattedTasks.filter(
 						(task) => task.dueDate && isToday(parseISO(task.dueDate))
 					)
 				);
 				setTasksDueThisWeek(
-					nonCompletedTasks.filter(
+					dashboardFormattedTasks.filter(
 						(task) =>
 							task.dueDate &&
 							isThisWeek(parseISO(task.dueDate), {
@@ -146,26 +285,26 @@ export default function DashboardPage() {
 					)
 				);
 				setTasksDueThisMonth(
-					nonCompletedTasks.filter(
+					dashboardFormattedTasks.filter(
 						(task) => task.dueDate && isThisMonth(parseISO(task.dueDate))
 					)
 				);
 			} catch (err) {
 				console.error("Failed to fetch tasks:", err);
 				setError("Failed to load tasks. Please try again later.");
-				// You might want to inspect `err.response` for more specific API error details
+				setAllTasks([]); // Ensure allTasks is reset to empty array on error
 			} finally {
 				setIsLoading(false);
 			}
 		};
 
 		fetchAndProcessTasks();
-	}, [user, idToken]); // Re-run effect if user or idToken changes
+	}, [user, idToken]);
 
 	if (isLoading) {
 		return (
 			<div className="flex justify-center items-center min-h-screen">
-				<Spinner1 /> {/* Or a spinner component */}
+				<Spinner1 />
 			</div>
 		);
 	}
@@ -174,7 +313,6 @@ export default function DashboardPage() {
 		return (
 			<div className="flex flex-col justify-center items-center min-h-screen p-4">
 				<p className="text-red-500 text-lg mb-4">{error}</p>
-				{/* Optionally, add a refresh button or login prompt */}
 			</div>
 		);
 	}
@@ -224,8 +362,18 @@ export default function DashboardPage() {
 						textColorClass="text-blue-600"
 					/>
 				</div>
-				<DonutChart />
-				
+				<div className="flex flex-col gap-4 md:flex-row md:h-[600px]">
+					<div className="flex-[2] h-full">
+						<DonutChart />
+					</div>
+					<div className="flex-[1] h-full">
+						<ArchiveManager
+							tasks={archivedTasks}
+							updateTask={updateTaskCallback}
+							deleteTaskFromMainList={deleteTaskFromMainListCallback}
+						/>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

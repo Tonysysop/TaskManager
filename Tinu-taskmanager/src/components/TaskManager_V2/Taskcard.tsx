@@ -1,6 +1,6 @@
 import React from "react"; // Ensure React is imported
 import { Calendar, Trash2, BadgeCheck } from "lucide-react";
-import { format } from "date-fns";
+import { format, formatDate } from "date-fns";
 import { cn } from "@/lib/utils";
 import TaskStatus from "@/components/TaskManager_V2/TaskStatus";
 import TaskTag from "@/components/TaskManager_V2/TaskTag";
@@ -54,22 +54,20 @@ const TaskCard = ({
 		setActiveCard(task);
 		e.dataTransfer.setData("text/plain", task.id);
 		e.dataTransfer.effectAllowed = "move";
-		setIsDragging(true)
+		setIsDragging(true);
 	};
-
-	
 
 	const handleDragEnd = () => {
 		setActiveCard(null);
-		setIsDragging(false)
+		setIsDragging(false);
 	};
 
 	const handleClick = () => {
-        // Only trigger onClick if not currently dragging
-        if (!isDragging) {
-            onClick();
-        }
-    };
+		// Only trigger onClick if not currently dragging
+		if (!isDragging) {
+			onClick();
+		}
+	};
 
 	const onChecklistItemToggle = (itemId: string, checked: boolean) => {
 		handleChecklistToggle(itemId, checked);
@@ -246,7 +244,10 @@ const TaskCard = ({
 						{/* Checklist */}
 						<ul className="space-y-1">
 							{task.checklist.map((item) => (
-								<li key={item.id} className="flex text-muted-foreground items-center gap-2 text-sm">
+								<li
+									key={item.id}
+									className="flex text-muted-foreground items-center gap-2 text-sm"
+								>
 									<Checkbox
 										className="cursor-pointer data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 dark:data-[state=checked]:bg-purple-600 dark:data-[state=checked]:border-purple-600 dark:data-[state=unchecked]:bg-transparent dark:data-[state=unchecked]:border-gray-500"
 										checked={item.completed}
@@ -279,15 +280,20 @@ const TaskCard = ({
 				<div
 					className={cn(
 						"flex items-center text-xs font-medium mt-2",
-						task.dueDate && isOverdue
+						task.status === "Completed"
+							? "text-green-600"
+							: task.dueDate && isOverdue
 							? "text-destructive"
 							: "text-muted-foreground"
 					)}
 				>
 					<Calendar size={14} className="mr-1.5" />
 					<span>
-						{task.dueDate ? (isOverdue ? "Overdue: " : "Due: ") : ""}
-						{formattedDueDate}
+						{task.status === "Completed" && task.completedAt
+							? `Completed: ${formatDate(task.completedAt, "MMM d, yyyy")}`
+							: task.dueDate
+							? `${isOverdue ? "Overdue: " : "Due: "}${formattedDueDate}`
+							: ""}
 					</span>
 				</div>
 			</div>

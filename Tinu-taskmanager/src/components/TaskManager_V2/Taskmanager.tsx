@@ -1,614 +1,439 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { ListTodo, Loader, CheckCircle } from "lucide-react";
+
+
+import React, { useMemo, useState, useCallback } from "react";
+import { ListTodo, Loader as LoaderIcon, CheckCircle } from "lucide-react"; // Renamed Loader
 import Column from "./Column";
 import { TaskAttributes } from "@/types/TaskAttributes";
 import NewTaskForm from "@/components/TaskManager_V2/taskform-new";
 import CustomToast from "@/components/TaskManager_V2/Alerts/Custom-toast";
 import LoaderUi from "./Loader";
-import axios from "axios";
+// Axios is now used within useTaskQueries.ts
 import { useAuth } from "@/Context/AuthContext";
-import { useArchiveManager } from "@/hooks/useArchiveManager"; // Still useful for general date validation, not specific to archival eligibility now
+import { useArchiveManager } from "@/hooks/useArchiveManager";
+import { useTasksData } from "@/hooks/useTaskQueries"; // IMPORT YOUR NEW HOOK
 
-const API_BASE = import.meta.env.VITE_API_URL;
+// API_BASE is used in useTaskQueries.ts
+// const API_BASE = import.meta.env.VITE_API_URL;
 
 const STATUS_VALUES = {
-	PLANNED: "Planned",
-	IN_PROGRESS: "In-Progress",
-	COMPLETED: "Completed",
+  PLANNED: "Planned",
+  IN_PROGRESS: "In-Progress",
+  COMPLETED: "Completed",
 } as const;
 
 type StatusValue = "Planned" | "In-Progress" | "Completed";
 
 const TinuMind: React.FC = () => {
-	// --- All useState hooks MUST be declared first and unconditionally ---
-	const [tasks, setTasks] = useState<TaskAttributes[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [activeCard, setActiveCard] = useState<TaskAttributes | null>(null);
-	const [isEditing, setIsEditing] = useState(false);
-	const [activeTask, setActiveTask] = useState<TaskAttributes | null>(null);
-	const [isFormOpen, setIsFormOpen] = useState(false);
+  const [activeCard, setActiveCard] = useState<TaskAttributes | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeTask, setActiveTask] = useState<TaskAttributes | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
-	// --- useContext hooks must also be declared unconditionally ---
-	const { idToken, user } = useAuth();
+  const { user } = useAuth(); // idToken is handled within useTasksData
 
-	// --- All useCallback definitions MUST come next and unconditionally ---
-	const updateTaskInMainList = useCallback(
-		async (taskId: string, updates: Partial<TaskAttributes>) => {
-			setTasks((prev) =>
-				prev.map((t) =>
-					t.id === taskId
-						? {
-								...t,
-								...updates,
-								dueDate:
-									updates.dueDate !== undefined
-										? updates.dueDate instanceof Date
-											? updates.dueDate
-											: new Date(updates.dueDate)
-										: t.dueDate,
-								completedAt:
-									updates.completedAt !== undefined
-										? updates.completedAt instanceof Date
-											? updates.completedAt
-											: new Date(updates.completedAt)
-										: t.completedAt,
-								archivedAt:
-									updates.archivedAt !== undefined
-										? updates.archivedAt instanceof Date
-											? updates.archivedAt
-											: new Date(updates.archivedAt)
-										: t.archivedAt,
-						  }
-						: t
-				)
-			);
+  const {
+    tasks, // This is your task list, managed by TanStack Query
+    isLoadingTasks,
+    // isFetchError, // You can use these for more specific error handling
+    // fetchError,
+    createTask,
+    isCreatingTask,
+    updateTask,
+    isUpdatingTask,
+    deleteTask,
+    // isDeletingTask, // Can be used for UI feedback
+  } = useTasksData();
 
-			if (!user?.sub || !idToken) {
-				CustomToast({
-					variant: "error",
-					description:
-						"User not authenticated. Cannot update task from archive manager.",
-					duration: 3000,
-				});
-				return;
-			}
 
-			const payload: Partial<TaskAttributes> & { id: string; userId: string } =
-				{
-					id: taskId,
-					userId: user.sub,
-					...updates,
-				};
-			if (payload.dueDate instanceof Date)
-				payload.dueDate = payload.dueDate.toISOString();
-			if (payload.completedAt instanceof Date)
-				payload.completedAt = payload.completedAt.toISOString();
-			if (payload.archivedAt instanceof Date)
-				payload.archivedAt = payload.archivedAt.toISOString();
 
-			try {
-				await axios.patch(`${API_BASE}/tasks`, payload, {
-					headers: { Authorization: `Bearer ${idToken}` },
-				});
-				CustomToast({
-					variant: "success",
-					description: "Task updated (by archive manager).",
-					duration: 2000,
-				});
-			} catch (error: any) {
-				console.error("Backend update failed from useArchiveManager:", error);
-				CustomToast({
-					variant: "error",
-					description:
-						error.response?.data?.error ||
-						"Failed to update task from archive manager.",
-					duration: 3000,
-				});
-			}
-		},
-		[setTasks, user?.sub, idToken]
-	);
+  // This function will be passed to useArchiveManager
+  const updateTaskForArchiveManager = useCallback(
+    async (taskId: string, updates: Partial<TaskAttributes>) => {
+      if (!user?.sub) {
+        CustomToast({
+          variant: "error",
+          description: "User not authenticated.",
+          duration: 3000,
+        });
+        return;
+      }
+      await updateTask({ taskId, updates });
+    },
+    [updateTask, user?.sub]
+  );
 
-	const handleDeleteTask = useCallback(
-		async (taskId: string) => {
-			if (!user?.sub) {
-				CustomToast({
-					variant: "error",
-					description: "User not authenticated",
-					duration: 3000,
-				});
-				return;
-			}
+  const handleDeleteTaskCallback = useCallback(
+    async (taskId: string) => {
+      if (!user?.sub) {
+        CustomToast({
+          variant: "error",
+          description: "User not authenticated",
+          duration: 3000,
+        });
+        return;
+      }
+      await deleteTask(taskId);
+    },
+    [deleteTask, user?.sub]
+  );
 
-			try {
-				const res = await axios.delete(`${API_BASE}/tasks`, {
-					headers: { Authorization: `Bearer ${idToken} ` },
-					data: {
-						taskId,
-						userId: user.sub,
-					},
-				});
+  const handleCreateTaskCallback = useCallback(
+    // Type for data coming from the form, before server-generated fields
+    (
+      newTaskFormData: Omit<
+        TaskAttributes,
+        "id" | "userId" | "createdAt" | "updatedAt"
+      >
+    ) => {
+      if (!user?.sub) {
+        CustomToast({
+          variant: "error",
+          description: "User not authenticated",
+          duration: 3000,
+        });
+        return;
+      }
+      // Ensure dates are handled correctly if the form provides strings
+      const taskToCreate = {
+        ...newTaskFormData,
+        dueDate: newTaskFormData.dueDate
+          ? new Date(newTaskFormData.dueDate)
+          : new Date(0),
+      };
+      createTask(taskToCreate);
+    },
+    [createTask, user?.sub] // createTask is stable
+  );
 
-				if (res.status >= 200 && res.status < 300) {
-					setTasks((prev) => prev.filter((t) => t.id !== taskId));
-					CustomToast({
-						variant: "success",
-						description: "Task Deleted Successfully",
-						duration: 3000,
-					});
-				} else {
-					CustomToast({
-						variant: "error",
-						description: (res.data as any).error || "Failed to delete task",
-						duration: 3000,
-					});
-				}
-			} catch (err: any) {
-				const message =
-					err.response?.data?.error || err.message || "Something went wrong";
-				CustomToast({ variant: "error", description: message, duration: 3000 });
-				console.error(err);
-			}
-		},
-		[user?.sub, idToken]
-	);
+  const handleTaskClick = useCallback((task: TaskAttributes) => {
+    setActiveTask(task);
+    setIsEditing(true);
+    setIsFormOpen(true);
+  }, []);
 
-	const handleCreateTask = useCallback(
-		(newTask: TaskAttributes) => {
-			if (!user?.sub) {
-				CustomToast({
-					variant: "error",
-					description: "User not authenticated",
-					duration: 3000,
-				});
-				return;
-			}
+  const handleEditTaskCallback = useCallback(
+    (taskWithUpdates: TaskAttributes) => {
+      // Expects full task object with updates merged
+      if (!user?.sub) {
+        CustomToast({
+          variant: "error",
+          description: "User not authenticated",
+          duration: 3000,
+        });
+        return;
+      }
+      const { id: taskId, ...updates } = taskWithUpdates;
 
-			const payload = {
-				...newTask,
-				userId: user?.sub,
-				dueDate: newTask.dueDate
-					? new Date(newTask.dueDate).toISOString()
-					: undefined,
-			};
+      const finalUpdates: Partial<TaskAttributes> = {
+        ...updates,
+        completedAt:
+          updates.status === STATUS_VALUES.COMPLETED
+            ? updates.completedAt || new Date() // Set or keep if already completed
+            : undefined, // Clear if not completed
+      };
+      updateTask({ taskId, updates: finalUpdates });
+      // setIsEditing(false); // Usually handled by form closure
+    },
+    [updateTask, user?.sub] // updateTask is stable
+  );
 
-			const normalizedTask: TaskAttributes = {
-				...newTask,
-				id: newTask.id || `temp-${Date.now()}`,
-				dueDate: newTask.dueDate ? new Date(newTask.dueDate) : new Date(0),
-			};
+  const handleToggleChecklistItemCallback = useCallback(
+    (taskId: string, itemId: string, checked: boolean) => {
+      if (!user?.sub) {
+        CustomToast({
+          variant: "error",
+          description: "User not authenticated.",
+          duration: 3000,
+        });
+        return;
+      }
+      const taskToUpdate = tasks.find((t) => t.id === taskId);
+      if (!taskToUpdate) return;
 
-			setTasks((prev) => [...prev, normalizedTask]);
+      const newChecklist = taskToUpdate.checklist?.map((item) =>
+        item.id === itemId ? { ...item, completed: checked } : item
+      );
+      updateTask({ taskId, updates: { checklist: newChecklist } });
+    },
+    [tasks, updateTask, user?.sub] // tasks needed to find current checklist
+  );
 
-			axios
-				.post(`${API_BASE}/tasks`, payload, {
-					headers: { Authorization: `Bearer ${idToken} ` },
-				})
-				.then(() => {
-					CustomToast({
-						variant: "success",
-						description: "Task created",
-						duration: 3000,
-					});
-				})
-				.catch((error) => {
-					console.error("Error creating task:", error);
-					setTasks((prev) =>
-						prev.filter((task) => task.id !== normalizedTask.id)
-					);
-					CustomToast({
-						variant: "error",
-						description: "Failed to create task",
-						duration: 3000,
-					});
-				});
-		},
-		[user?.sub, idToken]
-	);
+  // --- Custom hooks ---
+  // useArchiveManager now receives tasks from TanStack Query and mutation functions
+  useArchiveManager(
+    tasks,
+    updateTaskForArchiveManager,
+    handleDeleteTaskCallback
+  );
 
-	const handleTaskClick = useCallback((task: TaskAttributes) => {
-		console.log("Task clicked:", task);
-		setActiveTask(task);
-		setIsEditing(true);
-		setIsFormOpen(true);
-	}, []);
+  // useEffect for initial fetching is now handled by useQuery within useTasksData
 
-	const handleEditTask = useCallback(
-		async (updatedTask: TaskAttributes) => {
-			if (!user?.sub) {
-				CustomToast({
-					variant: "error",
-					description: "User not authenticated",
-					duration: 3000,
-				});
-				return;
-			}
+  const todoTasks = useMemo(
+    () =>
+      tasks
+        .filter((t) => t.status === STATUS_VALUES.PLANNED && !t.archived)
+        .sort((a, b) => {
+          // Primary sort: by position
+          const posDiff = (a.position ?? 0) - (b.position ?? 0);
+          if (posDiff !== 0) {
+            return posDiff; // If positions are different, use that difference
+          }
+          // Secondary sort: if positions are equal, sort by task ID for stability
+          return a.id.localeCompare(b.id);
+        }),
+    [tasks]
+  );
 
-			const originalTask = tasks.find((t) => t.id === updatedTask.id);
+  const doingTasks = useMemo(
+    () =>
+      tasks
+        .filter((t) => t.status === STATUS_VALUES.IN_PROGRESS && !t.archived)
+        .sort((a, b) => {
+          // Primary sort: by position
+          const posDiff = (a.position ?? 0) - (b.position ?? 0);
+          if (posDiff !== 0) {
+            return posDiff;
+          }
+          // Secondary sort: if positions are equal, sort by task ID for stability
+          return a.id.localeCompare(b.id);
+        }),
+    [tasks]
+  );
 
-			setTasks((prev) =>
-				prev.map((t) =>
-					t.id === updatedTask.id
-						? {
-								...updatedTask,
-								dueDate: updatedTask.dueDate
-									? new Date(updatedTask.dueDate)
-									: new Date(0),
-						  }
-						: t
-				)
-			);
-			setIsEditing(false);
+  const doneTasks = useMemo(
+    () =>
+      tasks
+        .filter((t) => t.status === STATUS_VALUES.COMPLETED && !t.archived)
+        .sort((a, b) => {
+          // Primary sort: by position
+          const posDiff = (a.position ?? 0) - (b.position ?? 0);
+          if (posDiff !== 0) {
+            return posDiff;
+          }
+          // Secondary sort: if positions are equal, sort by task ID for stability
+          return a.id.localeCompare(b.id);
+        }),
+    [tasks]
+  );
 
-			try {
-				const isoDueDate = updatedTask.dueDate
-					? new Date(updatedTask.dueDate).toISOString()
-					: undefined;
+  if (isLoadingTasks && !tasks.length) {
+    // Show loader if loading and no tasks are cached
+    return <LoaderUi />;
+  }
+  // Add more robust error handling based on isFetchError and fetchError if needed
 
-				const patchPayload = {
-					id: updatedTask.id,
-					userId: user.sub,
-					task: updatedTask.task,
-					status: updatedTask.status,
-					priority: updatedTask.priority,
-					dueDate: isoDueDate,
-					description: updatedTask.description,
-					checklist: updatedTask.checklist,
-					showDescriptionOnCard: updatedTask.showDescriptionOnCard,
-					showChecklistOnCard: updatedTask.showChecklistOnCard,
-					tags: updatedTask.tags,
-					archived: updatedTask.archived,
-					archivedAt: updatedTask.archivedAt
-						? new Date(updatedTask.archivedAt).toISOString()
-						: undefined,
-					completedAt:
-						updatedTask.status === STATUS_VALUES.COMPLETED
-							? new Date().toISOString()
-							: undefined,
-				};
+  const onDrop = async (
+    draggedTaskId: string,
+    targetStatus: StatusValue,
+    targetPosition: number // Index in the *target column*
+  ) => {
+    console.log(
+      `–– onDrop received → taskId: ${draggedTaskId}, status: ${targetStatus}, pos: ${targetPosition}`
+    );
 
-				await axios.patch(`${API_BASE}/tasks`, patchPayload, {
-					headers: { Authorization: `Bearer ${idToken}` },
-				});
+    if (!user?.sub) {
+      CustomToast({
+        variant: "error",
+        description: "User not authenticated",
+        duration: 3000,
+      });
+      setActiveCard(null);
+      return;
+    }
 
-				CustomToast({
-					variant: "success",
-					description: "Task updated",
-					duration: 3000,
-				});
-			} catch (err: any) {
-				console.error("Update failed", err);
-				CustomToast({
-					variant: "error",
-					description: err.response?.data?.error || "Failed to update task",
-					duration: 3000,
-				});
-				if (originalTask) {
-					setTasks((prev) =>
-						prev.map((t) => (t.id === originalTask.id ? originalTask : t))
-					);
-				}
-			}
-		},
-		[user?.sub, idToken, tasks]
-	);
+    const original = tasks.find((t) => t.id === draggedTaskId);
+    if (!original) {
+      setActiveCard(null);
+      return;
+    }
 
-	const handleToggleChecklistItem = useCallback(
-		async (taskId: string, itemId: string, checked: boolean) => {
-			if (!user?.sub || !idToken) {
-				CustomToast({
-					variant: "error",
-					description: "User not authenticated. Cannot update checklist.",
-					duration: 3000,
-				});
-				return;
-			}
+    // Filter tasks belonging to the target column, EXCLUDING the dragged one,
+    // AND CRITICALLY, EXCLUDING archived tasks.
+    // This ensures position calculation is based ONLY on visible tasks.
+    const tasksInTargetColumn = tasks
+      .filter(
+        (t) =>
+          t.status === targetStatus && t.id !== draggedTaskId && !t.archived
+      ) // <--- ADDED !t.archived
+      .sort((a, b) => {
+        // Primary sort: by position
+        const posDiff = (a.position ?? 0) - (b.position ?? 0);
+        if (posDiff !== 0) {
+          return posDiff;
+        }
+        // Secondary sort: by ID for stability
+        return a.id.localeCompare(b.id); // <--- Changed to ID sort
+      });
 
-			let originalTask: TaskAttributes | undefined;
-			let updatedTaskForBackend: TaskAttributes | undefined;
+    let newPosition: number;
 
-			setTasks((prevTasks) =>
-				prevTasks.map((task) => {
-					if (task.id === taskId) {
-						originalTask = { ...task };
-						const newChecklist = task.checklist?.map((item) =>
-							item.id === itemId ? { ...item, completed: checked } : item
-						);
-						updatedTaskForBackend = {
-							...task,
-							checklist: newChecklist,
-						};
-						return updatedTaskForBackend;
-					}
-					return task;
-				})
-			);
+    if (tasksInTargetColumn.length === 0) {
+      newPosition = 1.0; // If the target column is empty, set a base position
+    } else if (targetPosition === 0) {
+      newPosition = (tasksInTargetColumn[0].position ?? 0) / 2; // Moved to the very top
+    } else if (targetPosition >= tasksInTargetColumn.length) {
+      newPosition =
+        (tasksInTargetColumn[tasksInTargetColumn.length - 1].position ?? 0) + 1; // Moved to the very bottom
+    } else {
+      // Inserted between two existing tasks
+      const prevTask = tasksInTargetColumn[targetPosition - 1];
+      const nextTask = tasksInTargetColumn[targetPosition];
+      newPosition = ((prevTask?.position ?? 0) + (nextTask?.position ?? 0)) / 2;
+    }
 
-			if (updatedTaskForBackend) {
-				try {
-					const patchPayload = {
-						id: updatedTaskForBackend.id,
-						userId: user.sub,
-						task: updatedTaskForBackend.task,
-						status: updatedTaskForBackend.status,
-						priority: updatedTaskForBackend.priority,
-						dueDate: updatedTaskForBackend.dueDate
-							? new Date(updatedTaskForBackend.dueDate).toISOString()
-							: undefined,
-						description: updatedTaskForBackend.description,
-						checklist: updatedTaskForBackend.checklist,
-						showDescriptionOnCard: updatedTaskForBackend.showDescriptionOnCard,
-						showChecklistOnCard: updatedTaskForBackend.showChecklistOnCard,
-						tags: updatedTaskForBackend.tags,
-						archived: updatedTaskForBackend.archived,
-						archivedAt: updatedTaskForBackend.archivedAt
-							? new Date(updatedTaskForBackend.archivedAt).toISOString()
-							: undefined,
-						completedAt: updatedTaskForBackend.completedAt
-							? new Date(updatedTaskForBackend.completedAt).toISOString()
-							: undefined,
-					};
+    // Prepare the updates to send to the backend
+    const updatesForBackend: Partial<TaskAttributes> = {
+      status: targetStatus,
+      completedAt:
+        targetStatus === STATUS_VALUES.COMPLETED ? new Date() : undefined,
+      position: newPosition, // <--- Send the calculated new position
+    };
 
-					await axios.patch(`${API_BASE}/tasks`, patchPayload, {
-						headers: { Authorization: `Bearer ${idToken}` },
-					});
+    // --- Construct the NEW ORDER for optimistic update ---
+    // The optimistic tasks array should ALSO only contain non-archived tasks.
+    // This ensures consistency with the filtering done by useMemo for display.
+    const allNonArchivedTasksExceptDragged = tasks.filter(
+      (t) => t.id !== draggedTaskId && !t.archived // <--- ADDED !t.archived
+    );
 
-					CustomToast({
-						variant: "success",
-						description: "Checklist item updated.",
-						duration: 2000,
-					});
-				} catch (err: any) {
-					console.error("Checklist update failed", err);
-					CustomToast({
-						variant: "error",
-						description:
-							err.response?.data?.error || "Failed to update checklist item.",
-						duration: 3000,
-					});
-					if (originalTask) {
-						setTasks((prevTasks) =>
-							prevTasks.map((task) =>
-								task.id === taskId ? originalTask! : task
-							)
-						);
-					}
-				}
-			}
-		},
-		[user?.sub, idToken]
-	);
+    const updatedTaskForOptimistic: TaskAttributes = {
+      ...original,
+      ...updatesForBackend,
+      // Ensure Date objects for local state, as they might be strings from the backend
+      dueDate:
+        original.dueDate instanceof Date
+          ? original.dueDate // If it's already a Date object, keep it
+          : original.dueDate // If it's a string (e.g., from backend), convert it to a Date object
+          ? new Date(original.dueDate)
+          : "", // <--- CRUCIAL CHANGE HERE: If original.dueDate is null, undefined, or empty string, assign an empty string
 
-	// --- Custom hooks must also be called unconditionally ---
-	// The useArchiveManager hook no longer returns `archivedTasks` or `getTasksEligibleForArchival`.
-	// It primarily manages the auto-archival logic based on the `tasks` and `updateTask` you pass it.
-	useArchiveManager(
-		tasks,
-		updateTaskInMainList,
-		handleDeleteTask // Assuming deleteTaskFromMainList in useArchiveManager maps to handleDeleteTask here
-	);
+      archivedAt:
+        original.archivedAt instanceof Date
+          ? original.archivedAt
+          : original.archivedAt
+          ? new Date(original.archivedAt)
+          : undefined,
+      completedAt:
+        updatesForBackend.completedAt instanceof Date
+          ? updatesForBackend.completedAt
+          : updatesForBackend.completedAt
+          ? new Date(updatesForBackend.completedAt)
+          : undefined,
+    };
 
-	// --- All useEffect hooks MUST come after all useState, useContext, and useCallback definitions, and unconditionally ---
-	useEffect(() => {
-		if (!user?.sub || !idToken) {
-			setIsLoading(false);
-			return;
-		}
+    const nextTasksArrayForOptimistic = [
+      ...allNonArchivedTasksExceptDragged,
+      updatedTaskForOptimistic,
+    ].sort((a, b) => {
+      // Primary sort: by status for grouping
+      if (a.status !== b.status) {
+        const statusOrder = [
+          STATUS_VALUES.PLANNED,
+          STATUS_VALUES.IN_PROGRESS,
+          STATUS_VALUES.COMPLETED,
+        ];
+        return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+      }
+      // Secondary sort: by position (primary) and ID (secondary for stability)
+      const posDiff = (a.position ?? 0) - (b.position ?? 0);
+      if (posDiff !== 0) {
+        return posDiff;
+      }
+      return a.id.localeCompare(b.id); // <--- Changed to ID sort
+    });
 
-		const fetchTasks = async () => {
-			setIsLoading(true);
-			try {
-				const res = await axios.get<TaskAttributes[]>(`${API_BASE}/tasks`, {
-					params: { userId: user?.sub },
-					headers: { Authorization: `Bearer ${idToken} ` },
-				});
-				const data = res.data;
+    // Call the updateTask mutation with the backend updates AND the filtered optimistic array
+    await updateTask({
+      taskId: draggedTaskId,
+      updates: updatesForBackend,
+      optimisticTasks: nextTasksArrayForOptimistic, // <--- Use this correctly filtered array
+    });
 
-				setTasks(
-					data.map((t) => ({
-						...t,
-						dueDate: t.dueDate ? new Date(t.dueDate) : new Date(0),
-						completedAt: t.completedAt ? new Date(t.completedAt) : undefined,
-						archivedAt: t.archivedAt ? new Date(t.archivedAt) : undefined,
-					}))
-				);
-			} catch (err: any) {
-				console.error("Could not load tasks:", err);
-				CustomToast({
-					variant: "error",
-					description: "Could not load tasks",
-					duration: 3000,
-				});
-			} finally {
-				setIsLoading(false);
-			}
-		};
+    setActiveCard(null); // Reset active card
+  };
 
-		fetchTasks();
-	}, [user?.sub, idToken]);
+  return (
+    <div className="flex flex-col gap-6 p-4 md:p-6 h-screen overflow-hidden">
+      <div className="flex justify-end">
+        <NewTaskForm
+          mode={isEditing ? "edit" : "create"}
+          initialTask={activeTask ?? undefined}
+          opened={isFormOpen}
+          onOpenChange={(open) => {
+            setIsFormOpen(open);
+            if (!open) {
+              setIsEditing(false);
+              setActiveTask(null);
+            }
+          }}
+          onCreate={(formData) => {
+            // formData is Omit<TaskAttributes, 'id' | 'userId' | 'createdAt' | 'updatedAt'> or TaskAttributes for edit
+            if (isEditing && activeTask) {
+              // When editing, merge activeTask's ID and other unchanged fields with formData
+              const updatedTaskData = { ...activeTask, ...formData };
+              handleEditTaskCallback(updatedTaskData as TaskAttributes); // Cast if necessary, ensure ID is present
+            } else if (!isEditing) {
+              handleCreateTaskCallback(
+                formData as Omit<
+                  TaskAttributes,
+                  "id" | "userId" | "createdAt" | "updatedAt"
+                >
+              );
+            }
+            setIsFormOpen(false);
+            setActiveTask(null);
+            setIsEditing(false);
+          }}
+          isSubmitting={isCreatingTask || isUpdatingTask} // Disable form while mutations are pending
+        />
+      </div>
 
-	// Removed the useEffect hook that logged archivedTasks and getTasksEligibleForArchival
-	// as getTasksEligibleForArchival no longer exists.
-
-	// --- All useMemo hooks should also be declared unconditionally ---
-	const todoTasks = useMemo(
-		() =>
-			tasks.filter((t) => t.status === STATUS_VALUES.PLANNED && !t.archived),
-		[tasks]
-	);
-	const doingTasks = useMemo(
-		() =>
-			tasks.filter(
-				(t) => t.status === STATUS_VALUES.IN_PROGRESS && !t.archived
-			),
-		[tasks]
-	);
-	const doneTasks = useMemo(
-		() =>
-			tasks.filter((t) => t.status === STATUS_VALUES.COMPLETED && !t.archived),
-		[tasks]
-	);
-
-	// --- Now, any conditional return (like for loading) is safe ---
-	if (isLoading) {
-		return <LoaderUi />;
-	}
-
-	const onDrop = async (
-		draggedTaskId: string,
-		targetStatus: StatusValue,
-		targetPosition: number
-	) => {
-		console.log(
-			`–– onDrop received → taskId: ${draggedTaskId}, status: ${targetStatus}, pos: ${targetPosition}`
-		);
-
-		const original = tasks.find((t) => t.id === draggedTaskId);
-		if (!original) {
-			setActiveCard(null);
-			return;
-		}
-
-		const withoutOriginal = tasks.filter((t) => t.id !== draggedTaskId);
-		const updatedTask: TaskAttributes = {
-			...original,
-			status: targetStatus,
-			completedAt:
-				targetStatus === STATUS_VALUES.COMPLETED ? new Date() : undefined,
-		};
-		const peers = withoutOriginal.filter((t) => t.status === targetStatus);
-
-		let insertAt: number;
-		if (peers.length === 0) {
-			insertAt =
-				withoutOriginal.findIndex((t) => t.status === targetStatus) || 0;
-		} else {
-			insertAt =
-				targetPosition === 0
-					? withoutOriginal.findIndex((t) => t.id === peers[0].id)
-					: withoutOriginal.findIndex(
-							(t) => t.id === peers[targetPosition - 1].id
-					  ) + 1;
-		}
-		insertAt = Math.max(0, Math.min(withoutOriginal.length, insertAt));
-
-		const next = [
-			...withoutOriginal.slice(0, insertAt),
-			updatedTask,
-			...withoutOriginal.slice(insertAt),
-		];
-
-		setTasks(next);
-		setActiveCard(null);
-
-		try {
-			if (!user?.sub)
-				return CustomToast({
-					variant: "error",
-					description: "User not authenticated",
-					duration: 3000,
-				});
-
-			await axios.patch(
-				`${API_BASE}/tasks`,
-				{
-					id: draggedTaskId,
-					userId: user.sub,
-					status: targetStatus,
-					completedAt:
-						targetStatus === STATUS_VALUES.COMPLETED
-							? new Date().toISOString()
-							: undefined,
-				},
-				{
-					headers: { Authorization: `Bearer ${idToken} ` },
-				}
-			);
-			CustomToast({
-				variant: "success",
-				description: "Task Status Updated",
-				duration: 3000,
-			});
-		} catch (err: any) {
-			const message =
-				err.response?.data?.error || err.message || "Could not reach server";
-			CustomToast({ variant: "error", description: message, duration: 3000 });
-			console.error("Status update failed:", err);
-			setTasks(tasks);
-		}
-	};
-
-	return (
-		<div className="flex flex-col gap-6 p-4 md:p-6 h-screen overflow-hidden">
-			<div className="flex justify-end">
-				<NewTaskForm
-					mode={isEditing ? "edit" : "create"}
-					initialTask={activeTask ?? undefined}
-					opened={isFormOpen}
-					onOpenChange={(open) => {
-						setIsFormOpen(open);
-						if (!open) {
-							setIsEditing(false);
-							setActiveTask(null);
-						}
-					}}
-					onCreate={(task) => {
-						if (isEditing) {
-							handleEditTask(task);
-						} else {
-							handleCreateTask(task);
-						}
-						setIsFormOpen(false);
-					}}
-				/>
-			</div>
-
-			<div className="overflow-x-auto md:overflow-x-hidden flex md:grid px-4 scroll-smooth snap-x snap-mandatory md:grid-cols-3 pb-4 gap-4">
-				<Column
-					title="Planned"
-					icon={ListTodo}
-					statusValue={STATUS_VALUES.PLANNED}
-					tasks={todoTasks}
-					bgColor="bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
-					shadowColor="shadow-purple-100/50 dark:shadow-purple-900/30"
-					onDeleteTask={handleDeleteTask}
-					setActiveCard={setActiveCard}
-					onDrop={onDrop}
-					activeCard={activeCard}
-					onClickTask={handleTaskClick}
-					onToggleChecklistItem={handleToggleChecklistItem}
-				/>
-				<Column
-					title="In-Progress"
-					icon={Loader}
-					statusValue={STATUS_VALUES.IN_PROGRESS}
-					tasks={doingTasks}
-					bgColor="bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
-					shadowColor="shadowcolor-amber-100/50 dark:shadow-amber-900/30"
-					onDeleteTask={handleDeleteTask}
-					setActiveCard={setActiveCard}
-					onDrop={onDrop}
-					activeCard={activeCard}
-					onClickTask={handleTaskClick}
-					onToggleChecklistItem={handleToggleChecklistItem}
-				/>
-				<Column
-					title="Completed"
-					icon={CheckCircle}
-					statusValue={STATUS_VALUES.COMPLETED}
-					tasks={doneTasks}
-					bgColor="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
-					shadowColor="shadow-emerald-100/50 dark:shadow-emerald-900/30"
-					onDeleteTask={handleDeleteTask}
-					setActiveCard={setActiveCard}
-					onDrop={onDrop}
-					activeCard={activeCard}
-					onClickTask={handleTaskClick}
-					onToggleChecklistItem={handleToggleChecklistItem}
-				/>
-			</div>
-		</div>
-	);
+      <div className="overflow-x-auto md:overflow-x-hidden flex md:grid px-4 scroll-smooth snap-x snap-mandatory md:grid-cols-3 pb-4 gap-4">
+        <Column
+          title="Planned"
+          icon={ListTodo}
+          statusValue={STATUS_VALUES.PLANNED}
+          tasks={todoTasks}
+          bgColor="bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
+          shadowColor="shadow-purple-100/60 dark:shadow-purple-900/30"
+          onDeleteTask={handleDeleteTaskCallback}
+          setActiveCard={setActiveCard}
+          onDrop={onDrop}
+          activeCard={activeCard}
+          onClickTask={handleTaskClick}
+          onToggleChecklistItem={handleToggleChecklistItemCallback}
+        />
+        <Column
+          title="In-Progress"
+          icon={LoaderIcon} // Renamed
+          statusValue={STATUS_VALUES.IN_PROGRESS}
+          tasks={doingTasks}
+          bgColor="bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+          shadowColor="shadow-amber-100/50 dark:shadow-amber-900/30"
+          onDeleteTask={handleDeleteTaskCallback}
+          setActiveCard={setActiveCard}
+          onDrop={onDrop}
+          activeCard={activeCard}
+          onClickTask={handleTaskClick}
+          onToggleChecklistItem={handleToggleChecklistItemCallback}
+        />
+        <Column
+          title="Completed"
+          icon={CheckCircle}
+          statusValue={STATUS_VALUES.COMPLETED}
+          tasks={doneTasks}
+          bgColor="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+          shadowColor="shadow-emerald-100/50 dark:shadow-emerald-900/30"
+          onDeleteTask={handleDeleteTaskCallback}
+          setActiveCard={setActiveCard}
+          onDrop={onDrop}
+          activeCard={activeCard}
+          onClickTask={handleTaskClick}
+          onToggleChecklistItem={handleToggleChecklistItemCallback}
+        />
+      </div>
+    </div>
+  );
 };
 
 export default TinuMind;

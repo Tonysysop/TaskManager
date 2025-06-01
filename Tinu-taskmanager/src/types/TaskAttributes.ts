@@ -11,7 +11,7 @@ export interface TaskAttributes {
 	description?: string;
 	status: "Completed" | "In-Progress" | "Planned";
 	tags: Tag[];
-	dueDate: string | Date;
+	dueDate: string | Date 
 	priority: string;
 	showDescriptionOnCard: boolean;
 	showChecklistOnCard: boolean;
@@ -19,4 +19,5 @@ export interface TaskAttributes {
 	archived?: boolean;
 	archivedAt?: Date | string | undefined;
 	completedAt?: Date | string | undefined;
+	position:number
 }

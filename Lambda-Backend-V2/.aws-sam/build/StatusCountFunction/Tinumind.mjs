@@ -1,53 +1,57 @@
 // handler.js
-import { MongoClient } from 'mongodb';
+import { MongoClient } from "mongodb";
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,traceparent,tracestate',
-  'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PATCH,DELETE',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,traceparent,tracestate",
+  "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PATCH,DELETE",
 };
 
 let cachedDb = null;
 async function connectToDatabase() {
   if (cachedDb) return cachedDb;
   const uri = process.env.MONGODB_URI;
-  if (!uri) throw new Error('Missing MONGODB_URI');
+  if (!uri) throw new Error("Missing MONGODB_URI");
   const client = new MongoClient(uri, {
-    serverApi: { version: '1', strict: true, deprecationErrors: true },
+    serverApi: { version: "1", strict: true, deprecationErrors: true },
   });
   await client.connect();
-  cachedDb = client.db(process.env.DB_NAME || 'tinumindDB');
+  cachedDb = client.db(process.env.DB_NAME || "tinumindDB");
   return cachedDb;
 }
 
 export async function handler(event) {
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: CORS_HEADERS, body: '' };
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: CORS_HEADERS, body: "" };
   }
 
   const db = await connectToDatabase();
-  const tasks = db.collection(process.env.COLLECTION_NAME || 'Tasks');
+  const tasks = db.collection(process.env.COLLECTION_NAME || "Tasks");
 
   try {
     switch (event.httpMethod) {
-      case 'GET':
+      case "GET":
         return await handleGet(event, tasks);
-      case 'POST':
+      case "POST":
         return await handlePost(event, tasks);
-      case 'PATCH':
+      case "PATCH":
         return await handlePatch(event, tasks);
-      case 'DELETE':
+      case "DELETE":
         return await handleDelete(event, tasks);
       default:
-        return { statusCode: 405, headers: CORS_HEADERS, body: 'Method Not Allowed' };
+        return {
+          statusCode: 405,
+          headers: CORS_HEADERS,
+          body: "Method Not Allowed",
+        };
     }
   } catch (err) {
     console.error(err);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Internal server error' }),
+      body: JSON.stringify({ error: "Internal server error" }),
     };
   }
 }
@@ -56,9 +60,16 @@ export async function handler(event) {
 async function handleGet(event, tasks) {
   const userId = event.queryStringParameters?.userId;
   if (!userId) {
-    return { statusCode: 400, headers: CORS_HEADERS, body: 'Missing userId' };
+    return { statusCode: 400, headers: CORS_HEADERS, body: "Missing userId" };
   }
-  const all = await tasks.find({ userId }).toArray();
+  const all = await tasks
+    .find({ userId }, { projection: { _id: 0 } })
+    .sort({
+      status: 1, // First, sort by status (e.g., alphabetically if they are strings)
+      position: 1, // Then, sort by position (ascending)
+      id: 1,         // Finally, sort by ID for a consistent order from the DB
+    })
+    .toArray();
   return {
     statusCode: 200,
     headers: CORS_HEADERS,
@@ -72,7 +83,7 @@ async function handlePost(event, tasks) {
   try {
     body = JSON.parse(event.body);
   } catch {
-    return { statusCode: 400, headers: CORS_HEADERS, body: 'Invalid JSON' };
+    return { statusCode: 400, headers: CORS_HEADERS, body: "Invalid JSON" };
   }
 
   const { id, userId, task, status } = body;
@@ -80,7 +91,7 @@ async function handlePost(event, tasks) {
     return {
       statusCode: 422,
       headers: CORS_HEADERS,
-      body: 'Missing required fields: id, userId, task, status',
+      body: "Missing required fields: id, userId, task, status",
     };
   }
 
@@ -90,23 +101,30 @@ async function handlePost(event, tasks) {
     return {
       statusCode: 409,
       headers: CORS_HEADERS,
-      body: 'Task with that id already exists',
+      body: "Task with that id already exists",
     };
   }
 
-  // Normalize and insert
   const doc = {
     ...body,
     dueDate: body.dueDate ? new Date(body.dueDate) : null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    position:
+      body.position !== undefined
+        ? body.position
+        : (await tasks.countDocuments({
+            userId: body.userId,
+            status: body.status,
+          })) + 1, // Assign a default if not provided
   };
   await tasks.insertOne(doc);
 
   return {
     statusCode: 201,
     headers: CORS_HEADERS,
-    body: JSON.stringify({ message: 'Created new task', taskId: id }),
+    body: JSON.stringify(doc),
+    // body: JSON.stringify({ message: "Created new task", taskId: id }),
   };
 }
 
@@ -116,7 +134,7 @@ async function handlePatch(event, tasks) {
   try {
     body = JSON.parse(event.body);
   } catch {
-    return { statusCode: 400, headers: CORS_HEADERS, body: 'Invalid JSON' };
+    return { statusCode: 400, headers: CORS_HEADERS, body: "Invalid JSON" };
   }
 
   const { id, userId, ...updates } = body;
@@ -124,39 +142,94 @@ async function handlePatch(event, tasks) {
     return {
       statusCode: 422,
       headers: CORS_HEADERS,
-      body: 'Missing required fields: id, userId',
+      body: "Missing required fields: id, userId",
     };
   }
 
-  // Convert any date strings
-  if (updates.dueDate) {
-    updates.dueDate = new Date(updates.dueDate);
-  }
+  // Convert any date strings to Date objects
+  if (updates.dueDate) updates.dueDate = new Date(updates.dueDate);
+  if (updates.completedAt) updates.completedAt = new Date(updates.completedAt);
+  if (updates.archivedAt) updates.archivedAt = new Date(updates.archivedAt);
 
   const setFields = {
     ...updates,
     updatedAt: new Date(),
   };
 
-  const result = await tasks.updateOne(
-    { id, userId },
-    { $set: setFields }
-  );
+  // Update the task
+  const result = await tasks.updateOne({ id, userId }, { $set: setFields });
 
   if (result.matchedCount === 0) {
     return {
       statusCode: 404,
       headers: CORS_HEADERS,
-      body: 'Task not found or not authorized',
+      body: "Task not found or not authorized",
+    };
+  }
+
+  // 🔁 Return the updated task object
+  const updatedTask = await tasks.findOne({ id, userId });
+  if (!updatedTask) {
+    return {
+      statusCode: 500,
+      headers: CORS_HEADERS,
+      body: "Failed to retrieve updated task",
     };
   }
 
   return {
     statusCode: 200,
     headers: CORS_HEADERS,
-    body: JSON.stringify({ message: 'Task updated', taskId: id }),
+    body: JSON.stringify(updatedTask),
   };
 }
+
+// async function handlePatch(event, tasks) {
+//   let body;
+//   try {
+//     body = JSON.parse(event.body);
+//   } catch {
+//     return { statusCode: 400, headers: CORS_HEADERS, body: 'Invalid JSON' };
+//   }
+
+//   const { id, userId, ...updates } = body;
+//   if (!id || !userId) {
+//     return {
+//       statusCode: 422,
+//       headers: CORS_HEADERS,
+//       body: 'Missing required fields: id, userId',
+//     };
+//   }
+
+//   // Convert any date strings
+//   if (updates.dueDate) {
+//     updates.dueDate = new Date(updates.dueDate);
+//   }
+
+//   const setFields = {
+//     ...updates,
+//     updatedAt: new Date(),
+//   };
+
+//   const result = await tasks.updateOne(
+//     { id, userId },
+//     { $set: setFields }
+//   );
+
+//   if (result.matchedCount === 0) {
+//     return {
+//       statusCode: 404,
+//       headers: CORS_HEADERS,
+//       body: 'Task not found or not authorized',
+//     };
+//   }
+
+//   return {
+//     statusCode: 200,
+//     headers: CORS_HEADERS,
+//     body: JSON.stringify({ message: 'Task updated', taskId: id }),
+//   };
+// }
 
 // DELETE { taskId, userId }
 async function handleDelete(event, tasks) {
@@ -164,47 +237,32 @@ async function handleDelete(event, tasks) {
   try {
     body = JSON.parse(event.body);
   } catch {
-    return { statusCode: 400, headers: CORS_HEADERS, body: 'Invalid JSON' };
+    return { statusCode: 400, headers: CORS_HEADERS, body: "Invalid JSON" };
   }
 
   const { taskId, userId } = body;
   if (!taskId || !userId) {
-    return { statusCode: 422, headers: CORS_HEADERS, body: 'Missing taskId or userId' };
+    return {
+      statusCode: 422,
+      headers: CORS_HEADERS,
+      body: "Missing taskId or userId",
+    };
   }
 
   const res = await tasks.deleteOne({ id: taskId, userId });
   if (res.deletedCount === 0) {
-    return { statusCode: 404, headers: CORS_HEADERS, body: 'Not found or unauthorized' };
+    return {
+      statusCode: 404,
+      headers: CORS_HEADERS,
+      body: "Not found or unauthorized",
+    };
   }
   return {
     statusCode: 200,
     headers: CORS_HEADERS,
-    body: JSON.stringify({ message: 'Deleted' }),
+    body: JSON.stringify({ message: "Deleted" }),
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // handler.js or index.js (merged function with DB connection inside)
 // import { MongoClient } from 'mongodb';
@@ -221,20 +279,20 @@ async function handleDelete(event, tasks) {
 // // Function to connect to MongoDB
 // async function connectToDatabase() {
 //   if (cachedDb) return cachedDb;
-  
+
 //   const uri = process.env.MONGODB_URI;
 //   const dbName = process.env.DB_NAME || 'tinumindDB';
-  
+
 //   if (!uri) throw new Error('Missing MONGODB_URI');
-  
+
 //   const client = new MongoClient(uri, {
 //     serverApi: { version: '1', strict: true, deprecationErrors: true },
 //   });
-  
+
 //   await client.connect();
 //   cachedClient = client;
 //   cachedDb = client.db(dbName);
-  
+
 //   return cachedDb;
 // }
 
@@ -303,7 +361,7 @@ async function handleDelete(event, tasks) {
 //       dueDate: body.dueDate ? new Date(body.dueDate) : null,
 //       tags: body.tags || [],
 //       showDescriptionOnCard: body.showDescriptionOnCard, // Added preference for showDescriptionOnCard
-//       showChecklistOnCard: body.showChecklistOnCard, 
+//       showChecklistOnCard: body.showChecklistOnCard,
 //       updatedAt: new Date(),
 //     },
 //     $setOnInsert: {

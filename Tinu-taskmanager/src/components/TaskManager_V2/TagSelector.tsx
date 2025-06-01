@@ -1,6 +1,6 @@
 import { useTags } from "@/Context/TagContext";
 import { TagIcon, Pencil, X } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 
 interface Tag {
@@ -35,6 +35,18 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
   const [editedTagName, setEditedTagName] = useState("");
   const safeTags = Array.isArray(tags) ? tags : [];
 
+
+
+   // 1. Create a ref for the popover container
+  const popoverRef = useRef<HTMLDivElement>(null);
+  // 1. Create a ref for the button/trigger
+  const triggerRef = useRef<HTMLDivElement>(null); // Assuming the div is the trigger
+
+  const handleToggleClick = useCallback(() => {
+    setTagPopoverOpen(!tagPopoverOpen);
+  }, [tagPopoverOpen, setTagPopoverOpen]);
+
+
   const handleAddTag = () => {
     const trimmed = newTag.trim();
     if (trimmed && !safeTags.find((t) => t.name === trimmed)) {
@@ -53,12 +65,38 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
     }
   };
 
+    // 2. Add an effect to handle clicks outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Check if the click occurred outside the popover itself AND outside the trigger
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target as Node) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(event.target as Node)
+      ) {
+        setTagPopoverOpen(false);
+      }
+    };
+
+    // Only add the listener if the popover is open
+    if (tagPopoverOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    // Cleanup the event listener when the component unmounts or popover closes
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [tagPopoverOpen, setTagPopoverOpen]);
+
   return (
-    <div className="mb-4">
+    <div className="mb-4 relative ">
       {/* Tag display and toggle */}
       <div
+        ref = {triggerRef}
         className="w-full min-h-[2.5rem] px-3 py-2 border rounded-lg flex flex-wrap items-center border-gray-300 dark:border-gray-600 bg-transparent dark:bg-input/30 focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-gray-100 transition-all ease-in-out duration-200 shadow-sm focus:outline-none cursor-pointer"
-        onClick={() => setTagPopoverOpen(!tagPopoverOpen)}
+        onClick={handleToggleClick}
       >
         <TagIcon className="h-6 w-6 mr-2 text-gray-400 dark:text-gray-500 shrink-0" />
         {watchedTags.length > 0 ? (
@@ -95,7 +133,9 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
 
       {/* Toggleable content instead of popover */}
       {tagPopoverOpen && (
-        <div className="mt-2 w-48 max-h-60 overflow-y-auto rounded-xl border p-3 shadow-lg  custom-scrollbar">
+        <div 
+          ref={popoverRef}
+          className="absolute z-50 mt-2 w-48 max-h-60 overflow-y-auto rounded-xl border p-3 shadow-lg bg-foreground dark:bg-card  custom-scrollbar">
           <div className="grid gap-2">
             {tags.map((tag) => {
               const isSelected = watchedTags.includes(tag.name);

@@ -48,7 +48,7 @@ const ArchiveManager = ({
 		});
 		toast.success("Task unarchived and moved to 'In-Progress'!", {
 			position: "bottom-right",
-			duration: 3000,
+			duration: 4000,
 		});
 	};
 

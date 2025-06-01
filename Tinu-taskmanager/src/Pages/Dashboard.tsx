@@ -17,10 +17,7 @@ import { TaskAttributes } from "@/types/TaskAttributes";
 import { useArchiveManager } from "@/hooks/useArchiveManager";
 import ArchiveManager from "@/components/TaskManager_V2/ArchiveManager/ArchiveManager";
 
-
-import { useTasksData,  } from "@/hooks/useTaskQueries";
-
-
+import { useTasksData } from "@/hooks/useTaskQueries";
 
 // 1. Define the fetch function (can be outside the component or in a separate api.js file)
 
@@ -99,22 +96,18 @@ const TaskCard: React.FC<TaskCardProps> = ({
   );
 };
 
-
-
-
 export default function DashboardPage() {
-
   // ------ for Dashboard cards
- const {
-  tasks: allTasks,
-  isLoadingTasks: isLoading,
-  isFetchError: isError,
-  fetchError: error,
-  updateTaskAsync, // Now directly available
-  deleteTaskAsync, // Now directly available
-} = useTasksData();
+  const {
+    tasks: allTasks,
+    isLoadingTasks: isLoading,
+    //isFetchError: isError,
+    fetchError: error,
+    updateTaskAsync, // Now directly available
+    deleteTaskAsync, // Now directly available
+  } = useTasksData();
 
-   const updateTaskCallback = useCallback(
+  const updateTaskCallback = useCallback(
     async (taskId: string, updates: Partial<TaskAttributes>) => {
       // Call the updateTask mutation. We need to await its completion
       // if useArchiveManager is expecting a Promise to resolve.
@@ -130,7 +123,6 @@ export default function DashboardPage() {
     [updateTaskAsync] // Dependency on updateTaskAsync for useCallback
   );
 
-
   const deleteTaskFromMainListCallback = useCallback(
     async (taskId: string) => {
       // Call the deleteTask mutation. Similarly, use mutateAsync if awaiting is necessary.
@@ -144,7 +136,6 @@ export default function DashboardPage() {
     },
     [deleteTaskAsync] // Dependency on deleteTaskAsync for useCallback
   );
-
 
   // CALL useArchiveManager FOR ITS SIDE EFFECTS ONLY
   // It will automatically trigger updateTaskCallback for archival
@@ -164,16 +155,10 @@ export default function DashboardPage() {
   );
   // --- End of Functions for useArchiveManager ---
 
-
-
   const activeTasks = allTasks.filter(
     (task) =>
-      task.status &&
-      task.status.toLowerCase() !== "completed" &&
-      !task.archived
+      task.status && task.status.toLowerCase() !== "completed" && !task.archived
   );
-
-
 
   // ---- Start of Dahboard cards function ----
   const dashboardFormattedTasks = activeTasks.map((task) => ({
@@ -259,7 +244,7 @@ export default function DashboardPage() {
             <DonutChart />
           </div>
           <div className="flex-[1] h-full">
-           <ArchiveManager
+            <ArchiveManager
               tasks={archivedTasks}
               updateTask={updateTaskCallback}
               deleteTaskFromMainList={deleteTaskFromMainListCallback}

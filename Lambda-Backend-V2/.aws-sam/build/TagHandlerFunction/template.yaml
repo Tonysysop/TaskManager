@@ -19,6 +19,7 @@ Globals:
     Environment:
       Variables:
         MONGODB_URI: !Sub '{{resolve:ssm:MongoDBUri:1}}'
+        RESEND_API_KEY: !Sub '{{resolve:ssm:RESEND_API_KEY:1}}'
         DB_NAME: TinumindDB
         COLLECTION_NAME: Tasks
         TAG_COLLECTION_NAME: Tags
@@ -98,6 +99,20 @@ Resources:
             RestApiId: !Ref TinuMindApi
             Path: /feedback
             Method: ANY
+
+
+  TaskSummaryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: TinumindDailySummary
+      Handler: notification.handler
+      CodeUri: ./
+      Description: Sends daily task summaries via Resend
+      Events:
+        DailyTrigger:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day) # or use cron expression
 
 
 

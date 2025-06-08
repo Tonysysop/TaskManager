@@ -273,6 +273,8 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
         description: data.description ?? "",
         showDescriptionOnCard: taskState.showDescriptionOnCard,
         showChecklistOnCard: taskState.showChecklistOnCard,
+        email:user?.email,
+        name:user?.name,
         // --- ADD THE 'position' PROPERTY HERE ---
         position:
           mode === "edit"

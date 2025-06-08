@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Summary</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.5; color: #111827; }
+        table { border-collapse: collapse; width: 100%; }
+        td, th { padding: 0; }
+
+        /* Responsive Styles (Applied only to media queries for better control) */
+        @media only screen and (max-width: 600px) {
+            .mobile-padding { padding: 20px !important; }
+            .email-container-mobile { max-width: 100% !important; border-radius: 16px !important; }
+            .header-padding-mobile { padding: 32px 20px 24px 20px !important; }
+            .greeting-title-mobile { font-size: 20px !important; }
+            .stat-padding-mobile { padding: 20px !important; margin-bottom: 12px !important; }
+            .stat-number-mobile { font-size: 28px !important; }
+            .cta-padding-mobile { padding: 24px 20px !important; margin-top: 24px !important; }
+            .footer-padding-mobile { padding: 24px 20px !important; }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.5; color: #111827;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <tr>
+            <td align="center" valign="top" style="padding: 20px;" class="mobile-padding">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15); overflow: hidden;" class="email-container-mobile">
+                    
+                    <tr>
+                        <td align="center" style="padding: 40px 30px 30px 30px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" class="header-padding-mobile">
+                            <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.15); border: 1.5px solid rgba(255, 255, 255, 0.3); border-radius: 16px; margin: 0 auto 20px; display: block; text-align: center; line-height: 50px; overflow: hidden;">
+                                <img src="{{LOGO_URL}}" alt="Logo" width="30" height="30" style="max-width: 30px; height: auto; display: block; margin: 10px auto;">
+                                </div>
+                            
+                            <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                                Task Summary
+                            </h1>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <td style="padding: 35px 30px 40px 30px; background: #ffffff;">
+                            
+                            <div style="margin-bottom: 32px; text-align: left;">
+                                <h2 style="margin: 0 0 8px 0; color: #111827; font-size: 22px; font-weight: 700; line-height: 1.3; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; /* Fallback color for unsupported text gradients */ color: #667eea;" class="greeting-title-mobile">
+                                    Hi {{USER_NAME}},
+                                </h2>
+                                <p style="margin: 0; color: #6b7280; font-size: 15px; line-height: 1.5; font-weight: 400;">
+                                    Here's your beautiful task summary ✨
+                                </p>
+                            </div>
+                            
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 32px 0;">
+                                
+                                <tr>
+                                    <td style="padding-bottom: 16px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 16px; overflow: hidden; border-left: 4px solid #667eea;" class="stat-padding-mobile">
+                                            <tr>
+                                                <td style="padding: 24px;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td align="left" valign="middle" style="width: 70%;">
+                                                                <div style="color: #667eea; font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px;">Today</div>
+                                                                <div style="color: #111827; font-size: 32px; font-weight: 800; line-height: 1;" class="stat-number-mobile">{{TODAY_COUNT}}</div>
+                                                            </td>
+                                                            <td align="right" valign="middle" style="width: 30%;">
+                                                                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: block; margin-left: auto; text-align: center; line-height: 44px; font-size: 18px;">🗓️</div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td style="padding-bottom: 16px;">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 16px; overflow: hidden; border-left: 4px solid #8b5cf6;" class="stat-padding-mobile">
+                                            <tr>
+                                                <td style="padding: 24px;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td align="left" valign="middle" style="width: 70%;">
+                                                                <div style="color: #8b5cf6; font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px;">This Week</div>
+                                                                <div style="color: #111827; font-size: 32px; font-weight: 800; line-height: 1;" class="stat-number-mobile">{{WEEK_COUNT}}</div>
+                                                            </td>
+                                                            <td align="right" valign="middle" style="width: 30%;">
+                                                                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%); border-radius: 12px; display: block; margin-left: auto; text-align: center; line-height: 44px; font-size: 18px;">📅</div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 16px; overflow: hidden; border-left: 4px solid #764ba2;" class="stat-padding-mobile">
+                                            <tr>
+                                                <td style="padding: 24px;">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td align="left" valign="middle" style="width: 70%;">
+                                                                <div style="color: #764ba2; font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px;">This Month</div>
+                                                                <div style="color: #111827; font-size: 32px; font-weight: 800; line-height: 1;" class="stat-number-mobile">{{MONTH_COUNT}}</div>
+                                                            </td>
+                                                            <td align="right" valign="middle" style="width: 30%;">
+                                                                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); border-radius: 12px; display: block; margin-left: auto; text-align: center; line-height: 44px; font-size: 18px;">🗂️</div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td align="center" style="margin-top: 32px; padding: 28px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 18px; overflow: hidden;" class="cta-padding-mobile">
+                                        <div style="margin-bottom: 12px; font-size: 28px;">🚀</div>
+                                        <h3 style="margin: 0 0 8px 0; color: #ffffff; font-size: 18px; font-weight: 700; line-height: 1.3; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                            Keep up the great work!
+                                        </h3>
+                                        <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; line-height: 1.5;">
+                                            You're making excellent progress 🌟
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <td align="center" style="padding: 28px 30px; text-align: center; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-top: 1px solid #e5e7eb;" class="footer-padding-mobile">
+                            <p style="margin: 0 0 4px 0; color: #111827; font-size: 14px; font-weight: 600;">
+                                {{APP_NAME}}
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px; line-height: 1.4;">
+                                © {{CURRENT_YEAR}} {{APP_NAME}}. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

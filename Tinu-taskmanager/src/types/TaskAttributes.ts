@@ -20,4 +20,6 @@ export interface TaskAttributes {
 	archivedAt?: Date | string | undefined;
 	completedAt?: Date | string | undefined;
 	position:number
+	email:string
+	name:string
 }

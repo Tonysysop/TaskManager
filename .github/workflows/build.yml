@@ -34,6 +34,8 @@ jobs:
           npm ci --legacy-peer-deps
           npm run build -- --outDir Taskmanager-build
 
+
+
       ############Saving build Artifiact
       - name: Saving build artifact
         uses: actions/upload-artifact@v4
@@ -48,10 +50,44 @@ jobs:
           name: Taskmanager-build
           path: Tinu-taskmanager/Taskmanager-build
 
+      ## Docker set up
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      ## DockerHub Login
+      - name: Login to Dockerhub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      #GEt setcrets 
+      - name: Write VITE secrets into .env for Docker secret mount
+        run: |
+          mkdir -p .secrets
+          echo"VITE_API_KEY=${{ secrets.VITE_API_KEY }}" >> .secrets/appsecrets
+          echo"VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .secrets/appsecrets
+
+      ## build image
+      - name: Build Image with Buildkitx
+        env:
+          DOCKER_BUILDKIT: 1
+        run: |
+          docker build \
+            --secret id=appsecret,src=/secrets/appsecrets \
+            -t ${{ secrets.DOCKER_USERNAME }}/tinumind:latest .
+
+      - name: push image to Dockerhub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/tinumind:latest
+
+
+
       - name: Consume "$BUCKET_NAME & CLOUDFRONT_ID" env from infra repo
         run: |
           echo "BUCKET_NAME=${{ vars.BUCKET_NAME }}" >> $GITHUB_ENV
           echo "CLOUDFRONT_ID=${{ vars.CLOUDFRONT_ID }}" >> $GITHUB_ENV
+
+      - 
 
       ### Upload Build to s3
       - name: Upload build to s3

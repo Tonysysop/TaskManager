@@ -63,6 +63,7 @@ jobs:
 
       #GEt setcrets 
       - name: Write VITE secrets into .env for Docker secret mount
+        working-directory: Tinu-taskmanager
         run: |
           mkdir -p .secrets
           echo "VITE_API_KEY=${{ secrets.VITE_API_KEY }}" >> .secrets/appsecrets

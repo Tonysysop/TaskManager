@@ -87,7 +87,6 @@ jobs:
           echo "BUCKET_NAME=${{ vars.BUCKET_NAME }}" >> $GITHUB_ENV
           echo "CLOUDFRONT_ID=${{ vars.CLOUDFRONT_ID }}" >> $GITHUB_ENV
 
-      - 
 
       ### Upload Build to s3
       - name: Upload build to s3

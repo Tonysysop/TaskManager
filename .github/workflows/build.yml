@@ -65,8 +65,8 @@ jobs:
       - name: Write VITE secrets into .env for Docker secret mount
         run: |
           mkdir -p .secrets
-          echo"VITE_API_KEY=${{ secrets.VITE_API_KEY }}" >> .secrets/appsecrets
-          echo"VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .secrets/appsecrets
+          echo "VITE_API_KEY=${{ secrets.VITE_API_KEY }}" >> .secrets/appsecrets
+          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .secrets/appsecrets
 
       ## build image
       - name: Build Image with Buildkitx

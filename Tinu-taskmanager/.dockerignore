@@ -1,0 +1,42 @@
+# node_modules should never go into Docker context
+node_modules
+
+# build outputs (in case you rebuild inside Docker)
+dist
+build
+
+# local env files (often not needed or injected differently)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Vite or CRA dev cache
+.vite
+.cache
+.npm
+.pnpm
+yarn.lock
+
+# logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker and CI/CD
+.dockerignore
+docker-compose.yml
+Dockerfile*
+
+# editor/IDE settings
+.vscode
+.idea
+*.sw?
+
+# test outputs
+coverage

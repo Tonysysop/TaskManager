@@ -72,6 +72,7 @@ jobs:
       - name: Build Image with Buildkitx
         env:
           DOCKER_BUILDKIT: 1
+        working-directory: Tinu-taskmanager
         run: |
           docker build \
             --secret id=appsecret,src=./.secrets/appsecrets \

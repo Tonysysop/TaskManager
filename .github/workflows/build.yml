@@ -74,7 +74,7 @@ jobs:
           DOCKER_BUILDKIT: 1
         run: |
           docker build \
-            --secret id=appsecret,src=/secrets/appsecrets \
+            --secret id=appsecret,src=./.secrets/appsecrets \
             -t ${{ secrets.DOCKER_USERNAME }}/tinumind:latest .
 
       - name: push image to Dockerhub

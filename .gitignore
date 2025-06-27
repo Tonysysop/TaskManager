@@ -136,3 +136,4 @@ Tinu-taskmanager/terraform-s3-config/terraform.tfstate.backup
 Tinu-taskmanager/terraform-s3-config/terraform.tfstate
 Tinu-taskmanager/.env
 Tinu-taskmanager/.env
+Tinu-taskmanager/image-secret/secret.txt

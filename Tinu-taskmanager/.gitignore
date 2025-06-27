@@ -44,4 +44,6 @@ amplifytools.xcconfig
 .secret-*
 **.sample
 .env
+
+Tinu-taskmanager\image-secret
 #amplify-do-not-edit-end

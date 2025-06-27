@@ -1,58 +1,119 @@
-import { useEffect } from "react";
-import NotesIllustration from "@/components/TaskManager_V2/NotesPage/NotesIllustration";
-import CountdownTimer from "@/components/TaskManager_V2/NotesPage/CountdownTimer";
-import EmailForm from "@/components/TaskManager_V2/NotesPage/EmailForm";
+import { useState } from "react";
+import { Plus, FileText } from "lucide-react";
+import { useNotes } from "@/Context/NotesContext";
+import NotesGrid from "@/components/TaskManager_V2/NotesPage/NotesGrid";
+import SearchAndFilter from "@/components/TaskManager_V2/NotesPage/SearchAndFilter";
+import NoteEditor from "@/components/TaskManager_V2/NotesPage/NotesEditor/NoteEditor";
+import { Button } from "@/components/ui/button";
+import { Note } from "@/types/NoteAttributes";
+import { NotesProvider } from "@/Context/NotesContext";
 
-const Index = () => {
-	// Add fade-in animation effect when the component mounts
-	useEffect(() => {
-		const animateElements = document.querySelectorAll(".animate-fade-in");
-		animateElements.forEach((element, index) => {
-			const htmlElement = element as HTMLElement;
-			htmlElement.style.animationDelay = `${index * 0.2}s`;
-			htmlElement.style.opacity = "1";
-		});
-	}, []);
+import ListView from "@/components/TaskManager_V2/NotesPage/ListView";
 
+function App() {
+	const {
+		togglePinNote,
+		toggleArchiveNote,
+		deleteNote,
+		restoreNote,
+		permanentlyDeleteNote,
+		filteredNotes,
+		filters,
+	} = useNotes();
+
+	const [currentView, setCurrentView] = useState<"list" | "editor">("list");
+	const [editingNote, setEditingNote] = useState<Note | null>(null);
+
+	const handleEditNote = (note: Note) => {
+		setEditingNote(note);
+		setCurrentView("editor");
+	};
+
+	const handleNewNote = () => {
+		setEditingNote(null);
+		setCurrentView("editor");
+	};
+
+	const handleBackToList = () => {
+		setCurrentView("list");
+		setEditingNote(null);
+	};
+
+	// Show editor view
+	if (currentView === "editor") {
+		return (
+			<NoteEditor
+				onBack={handleBackToList}
+				editingNote={editingNote}
+				onNoteCreated={handleBackToList}
+			/>
+		);
+	}
+
+	// Show main list view
 	return (
-		<div className="min-h-screen flex flex-col items-center justify-center bg-[#F9F9F9] dark:bg-gray-900 px-4 py-12 transition-colors duration-300">
-			<div className="w-full max-w-3xl mx-auto text-center space-y-8">
-				<div className="animate-fade-in opacity-0 transition-all duration-700">
-					<h1 className="text-4xl md:text-5xl font-light text-[#333333] dark:text-white mb-2">
-						Your Notes,{" "}
-						<span className="text-blue-600 dark:text-blue-400 font-normal">
-							Reimagined
-						</span>
-					</h1>
-					<p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-6">
-						A better way to capture, organize, and access your thoughts.
-					</p>
+		<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+			<div className="container mx-auto px-4 py-8">
+				{/* Header */}
+				<div className="mb-8">
+					<div className="flex items-center justify-between mb-8">
+						<div className="flex items-center gap-4">
+							<div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+								<FileText className="w-7 h-7 text-white" />
+							</div>
+							<div>
+								<h1 className="text-4xl font-bold text-gray-900 mb-1">
+									My Notes
+								</h1>
+								<p className="text-gray-600 text-lg">
+									Organize your thoughts and ideas beautifully
+								</p>
+							</div>
+						</div>
+						<Button
+							onClick={handleNewNote}
+							className="shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/30 px-6 py-3"
+						>
+							<Plus className="w-5 h-5 mr-2" />
+							New Note
+						</Button>
+					</div>
+
+					{/* Unified Search and Filter */}
+					<SearchAndFilter />
 				</div>
 
-				<div className="animate-fade-in opacity-0 transition-all duration-700">
-					<NotesIllustration />
-				</div>
-
-				<div className="animate-fade-in opacity-0 transition-all duration-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg">
-					<p className="text-gray-700 dark:text-gray-300 mb-2">Launching in</p>
-					<CountdownTimer />
-				</div>
-
-				<div className="animate-fade-in opacity-0 transition-all duration-700 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg">
-					<h2 className="text-xl font-medium text-gray-800 dark:text-white mb-4">
-						You will be the first to Know when Tinumind Notes Launches
-					</h2>
-					<EmailForm />
-				</div>
-
-				<footer className="animate-fade-in opacity-0 transition-all duration-700 pt-16">
-					<p className="text-sm text-gray-500 dark:text-gray-400">
-						© 2025 TinuMind. All rights reserved.
-					</p>
-				</footer>
+				{/* Notes Grid */}
+				{filters.viewMode === "list" ? (
+					<ListView
+						notes={filteredNotes}
+						onEditNote={handleEditNote}
+						onTogglePin={togglePinNote}
+						onToggleArchive={toggleArchiveNote}
+						onDeleteNote={deleteNote}
+						onRestoreNote={restoreNote}
+						onPermanentDelete={permanentlyDeleteNote}
+					/>
+				) : (
+					<NotesGrid
+						notes={filteredNotes}
+						onEditNote={handleEditNote}
+						onTogglePin={togglePinNote}
+						onToggleArchive={toggleArchiveNote}
+						onDeleteNote={deleteNote}
+						onRestoreNote={restoreNote}
+						onPermanentDelete={permanentlyDeleteNote}
+					/>
+				)}
 			</div>
 		</div>
 	);
-};
+}
 
-export default Index;
+export default function NotesWithProvider() {
+	return (
+		<NotesProvider>
+			<App />
+		</NotesProvider>
+	);
+}

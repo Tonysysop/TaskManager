@@ -20,6 +20,7 @@ Globals:
         COLLECTION_NAME: Tasks
         TAG_COLLECTION_NAME: Tags
         FEEDBACK_COLLECTION_NAME: Feedback
+        NOTES_COLLECTION_NAME: Notes
 Resources:
   TinuMindApi:
     Type: AWS::Serverless::Api
@@ -91,6 +92,22 @@ Resources:
             Method: ANY
     Metadata:
       SamResourceId: FeedbackFunction
+  NotesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: noteHandler.handler
+      MemorySize: 256
+      CodeUri: NotesFunction
+      Events:
+        TagApi:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: TinuMindApi
+            Path: /notes
+            Method: ANY
+    Metadata:
+      SamResourceId: NotesFunction
   TaskSummaryFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -102,6 +119,6 @@ Resources:
         DailyTrigger:
           Type: Schedule
           Properties:
-            Schedule: rate(1 day)
+            Schedule: cron(0 7 * * ? *)
     Metadata:
       SamResourceId: TaskSummaryFunction

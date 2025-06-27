@@ -13,10 +13,11 @@ interface TagSelectorProps {
   tagPopoverOpen: boolean;
   setTagPopoverOpen: (open: boolean) => void;
   tags: Tag[];
-  watchedTags: string[];
+  watchedTags?: string[];
   handleTagSelect: (tagName: string) => void;
   handleRemoveTag: (tagName: string) => void;
   errorMessage?: string;
+  selectedTags?: string[]; 
 }
 
 export const TagSelector: React.FC<TagSelectorProps> = ({
@@ -99,8 +100,8 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
         onClick={handleToggleClick}
       >
         <TagIcon className="h-6 w-6 mr-2 text-gray-400 dark:text-gray-500 shrink-0" />
-        {watchedTags.length > 0 ? (
-          watchedTags.map((tagName) => {
+        {(watchedTags ?? []).length > 0 ? (
+          (watchedTags ?? []).map((tagName) => {
             const tagObj = tags.find((t) => t.name === tagName);
             const tagClassString = tagObj?.color || "bg-gray-300 text-gray-800";
 
@@ -135,10 +136,10 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
       {tagPopoverOpen && (
         <div 
           ref={popoverRef}
-          className="absolute z-50 mt-2 w-48 max-h-60 overflow-y-auto rounded-xl border p-3 shadow-lg bg-foreground dark:bg-card  custom-scrollbar">
+          className="absolute z-50 mt-2 w-1/3 max-h-60 overflow-y-auto rounded-xl bg-accent-foreground border p-3 shadow-lg  dark:bg-card  custom-scrollbar">
           <div className="grid gap-2">
             {tags.map((tag) => {
-              const isSelected = watchedTags.includes(tag.name);
+              const isSelected = (watchedTags ?? []).includes(tag.name);
               const isEditing = editingTagId === tag.tagId;
 
               return (

@@ -1,0 +1,16 @@
+{
+  "name": "lambda-backend-v2",
+  "version": "1.0.0",
+  "description": "Backend for Tinumind",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mrtonero",
+  "license": "ISC",
+  "dependencies": {
+    "luxon": "^3.6.1",
+    "mongodb": "^6.16.0",
+    "resend": "^4.5.2"
+  }
+}

@@ -195,6 +195,33 @@ export const permanentlyDeleteNoteApi = async ({
 	}
 };
 
+
+export const updateChecklistApi = async ({
+	noteId,
+	checklist,
+	idToken,
+	userId,
+}: {
+	noteId: string;
+	checklist: { id: string; text: string; checked: boolean }[];
+	idToken: string;
+	userId: string;
+}): Promise<Note> => {
+	try {
+		const axiosInstance = createAxiosInstance(idToken);
+		const payload = { id: noteId, checklist };
+		const response = await axiosInstance.patch<Note>(
+			`/notes?userId=${userId}`,
+			payload
+		);
+		return response.data;
+	} catch (error) {
+		handleAxiosError(error, `update checklist for note ${noteId}`);
+	}
+};
+
+
+
 // Centralized error handler
 function handleAxiosError(error: unknown, context: string): never {
 	if (axios.isAxiosError(error) && error.response) {

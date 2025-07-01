@@ -89,15 +89,15 @@ export const handler = async (event) => {
 
 				updates.updatedAt = new Date();
 
-				const result = await collection.updateOne(
-					{ id, userId },
-					{ $set: updates }
-				);
+				await collection.updateOne({ id, userId }, { $set: updates });
+
+				// ✅ Fetch the updated note
+				const updatedNote = await collection.findOne({ id, userId });
 
 				return {
 					statusCode: 200,
 					headers: CORS_HEADERS,
-					body: JSON.stringify({ matchedCount: result.matchedCount }),
+					body: JSON.stringify(updatedNote),
 				};
 			}
 

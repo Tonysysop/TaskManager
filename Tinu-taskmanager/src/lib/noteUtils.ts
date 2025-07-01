@@ -1,3 +1,165 @@
+
+import { Note } from "@/types/NoteAttributes";
+
+// Note: All functions that directly interacted with localStorage (e.g., getAllNotes, saveNote, getNotesState, saveNotesState)
+// and the history management functions (undo, redo) have been removed.
+// Their responsibilities are now handled by the API layer and TanStack Query hooks.
+// The functions below are pure utilities for filtering and sorting the data fetched from the server.
+
+// --- Search and Filter Utilities ---
+
+/**
+ * Filters an array of notes based on a search query.
+ * @param notes The array of notes to search through.
+ * @param query The search term.
+ * @returns A new array of notes that match the query.
+ */
+export const searchNotes = (notes: Note[], query: string): Note[] => {
+	if (!query.trim()) {
+		return notes;
+	}
+
+	const searchTerm = query.toLowerCase();
+	return notes.filter(
+		(note) =>
+			note.title.toLowerCase().includes(searchTerm) ||
+			note.content.toLowerCase().includes(searchTerm) ||
+			note.tags.some((tag) => tag.name.toLowerCase().includes(searchTerm)) ||
+			(note.checklist &&
+				note.checklist.some((item) =>
+					item.text.toLowerCase().includes(searchTerm)
+				))
+	);
+};
+
+/**
+ * Filters an array of notes to include only those that contain all specified tags.
+ * @param notes The array of notes to filter.
+ * @param selectedTags An array of tags that must be present on the note.
+ * @returns A new array of notes that match the tag criteria.
+ */
+export const filterNotesByTags = (
+	notes: Note[],
+	selectedTags: string[]
+): Note[] => {
+	if (selectedTags.length === 0) {
+		return notes;
+	}
+
+	return notes.filter((note) =>
+		selectedTags.every((tag) => note.tags.some((t) => t.name === tag))
+	);
+};
+
+// --- Sorting and Data Extraction Utilities ---
+
+/**
+ * Sorts an array of notes by a specified field and order. Pinned notes are always sorted first.
+ * @param notes The array of notes to sort.
+ * @param sortBy The field to sort by ('updatedAt', 'createdAt', 'title').
+ * @param sortOrder The order to sort in ('asc', 'desc').
+ * @returns A new, sorted array of notes.
+ */
+export const sortNotes = (
+	notes: Note[],
+	sortBy: "updatedAt" | "createdAt" | "title",
+	sortOrder: "asc" | "desc"
+): Note[] => {
+	const sorted = [...notes].sort((a, b) => {
+		// Pinned notes always come first, regardless of sort criteria
+		if (a.isPinned && !b.isPinned) return -1;
+		if (!a.isPinned && b.isPinned) return 1;
+
+		let comparison = 0;
+		switch (sortBy) {
+			case "title":
+				comparison = a.title.localeCompare(b.title);
+				break;
+			case "createdAt":
+				comparison =
+					new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+				break;
+			case "updatedAt":
+			default:
+				comparison =
+					new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+				break;
+		}
+		return sortOrder === "asc" ? comparison : -comparison;
+	});
+	return sorted;
+};
+
+/**
+ * Extracts all unique tags from an array of notes.
+ * @param notes The array of notes.
+ * @returns A sorted array of unique tag strings.
+ */
+export const getAllTags = (notes: Note[]): string[] => {
+	const allTags = notes.flatMap((note) => note.tags.map((tag) => tag.name));
+	return [...new Set(allTags)].sort();
+};
+
+// --- Composite Filtering ---
+
+/**
+ * Interface for the filter options used by getFilteredNotes.
+ * This replaces the monolithic `NoteState`.
+ */
+export interface FilterOptions {
+	searchQuery: string;
+	selectedTags: string[];
+	sortBy: "updatedAt" | "createdAt" | "title";
+	sortOrder: "asc" | "desc";
+	showArchived: boolean;
+	showDeleted: boolean;
+}
+
+/**
+ * Applies a full set of filters and sorting to an array of notes.
+ * This is the main function to be used in components to display the correct list of notes.
+ * @param notes The original array of notes (likely from `useGetNotes`).
+ * @param options An object containing all filter and sort criteria.
+ * @returns The final, filtered, and sorted array of notes to be rendered.
+ */
+export const getFilteredNotes = (
+	notes: Note[],
+	options: FilterOptions
+): Note[] => {
+	const {
+		searchQuery,
+		selectedTags,
+		sortBy,
+		sortOrder,
+		showArchived,
+		showDeleted,
+	} = options;
+
+	// Note: Filtering for archived/deleted is best handled by the API, but can be done on the client as a fallback.
+	// e.g., your API call could be `GET /api/notes?status=archived`
+	let filtered = notes.filter((note) => {
+		if (showDeleted) return note.isDeleted;
+		if (showArchived) return note.isArchived && !note.isDeleted;
+		return !note.isArchived && !note.isDeleted;
+	});
+
+	// Apply the other filters in sequence
+	filtered = searchNotes(filtered, searchQuery);
+	filtered = filterNotesByTags(filtered, selectedTags);
+	filtered = sortNotes(filtered, sortBy, sortOrder);
+
+	return filtered;
+};
+
+
+
+
+
+
+
+
+
+
 // import { Note, NoteState } from "@/types/NoteAttributes";
 
 // const NOTES_STORAGE_KEY = "smart_notes";
@@ -260,154 +422,3 @@
 // };
 
 // src/utils/noteUtils.ts
-import { Note } from "@/types/NoteAttributes";
-
-// Note: All functions that directly interacted with localStorage (e.g., getAllNotes, saveNote, getNotesState, saveNotesState)
-// and the history management functions (undo, redo) have been removed.
-// Their responsibilities are now handled by the API layer and TanStack Query hooks.
-// The functions below are pure utilities for filtering and sorting the data fetched from the server.
-
-// --- Search and Filter Utilities ---
-
-/**
- * Filters an array of notes based on a search query.
- * @param notes The array of notes to search through.
- * @param query The search term.
- * @returns A new array of notes that match the query.
- */
-export const searchNotes = (notes: Note[], query: string): Note[] => {
-	if (!query.trim()) {
-		return notes;
-	}
-
-	const searchTerm = query.toLowerCase();
-	return notes.filter(
-		(note) =>
-			note.title.toLowerCase().includes(searchTerm) ||
-			note.content.toLowerCase().includes(searchTerm) ||
-			note.tags.some((tag) => tag.name.toLowerCase().includes(searchTerm)) ||
-			(note.checklist &&
-				note.checklist.some((item) =>
-					item.text.toLowerCase().includes(searchTerm)
-				))
-	);
-};
-
-/**
- * Filters an array of notes to include only those that contain all specified tags.
- * @param notes The array of notes to filter.
- * @param selectedTags An array of tags that must be present on the note.
- * @returns A new array of notes that match the tag criteria.
- */
-export const filterNotesByTags = (
-	notes: Note[],
-	selectedTags: string[]
-): Note[] => {
-	if (selectedTags.length === 0) {
-		return notes;
-	}
-
-	return notes.filter((note) =>
-		selectedTags.every((tag) => note.tags.some((t) => t.name === tag))
-	);
-};
-
-// --- Sorting and Data Extraction Utilities ---
-
-/**
- * Sorts an array of notes by a specified field and order. Pinned notes are always sorted first.
- * @param notes The array of notes to sort.
- * @param sortBy The field to sort by ('updatedAt', 'createdAt', 'title').
- * @param sortOrder The order to sort in ('asc', 'desc').
- * @returns A new, sorted array of notes.
- */
-export const sortNotes = (
-	notes: Note[],
-	sortBy: "updatedAt" | "createdAt" | "title",
-	sortOrder: "asc" | "desc"
-): Note[] => {
-	const sorted = [...notes].sort((a, b) => {
-		// Pinned notes always come first, regardless of sort criteria
-		if (a.isPinned && !b.isPinned) return -1;
-		if (!a.isPinned && b.isPinned) return 1;
-
-		let comparison = 0;
-		switch (sortBy) {
-			case "title":
-				comparison = a.title.localeCompare(b.title);
-				break;
-			case "createdAt":
-				comparison =
-					new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-				break;
-			case "updatedAt":
-			default:
-				comparison =
-					new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-				break;
-		}
-		return sortOrder === "asc" ? comparison : -comparison;
-	});
-	return sorted;
-};
-
-/**
- * Extracts all unique tags from an array of notes.
- * @param notes The array of notes.
- * @returns A sorted array of unique tag strings.
- */
-export const getAllTags = (notes: Note[]): string[] => {
-	const allTags = notes.flatMap((note) => note.tags.map((tag) => tag.name));
-	return [...new Set(allTags)].sort();
-};
-
-// --- Composite Filtering ---
-
-/**
- * Interface for the filter options used by getFilteredNotes.
- * This replaces the monolithic `NoteState`.
- */
-export interface FilterOptions {
-	searchQuery: string;
-	selectedTags: string[];
-	sortBy: "updatedAt" | "createdAt" | "title";
-	sortOrder: "asc" | "desc";
-	showArchived: boolean;
-	showDeleted: boolean;
-}
-
-/**
- * Applies a full set of filters and sorting to an array of notes.
- * This is the main function to be used in components to display the correct list of notes.
- * @param notes The original array of notes (likely from `useGetNotes`).
- * @param options An object containing all filter and sort criteria.
- * @returns The final, filtered, and sorted array of notes to be rendered.
- */
-export const getFilteredNotes = (
-	notes: Note[],
-	options: FilterOptions
-): Note[] => {
-	const {
-		searchQuery,
-		selectedTags,
-		sortBy,
-		sortOrder,
-		showArchived,
-		showDeleted,
-	} = options;
-
-	// Note: Filtering for archived/deleted is best handled by the API, but can be done on the client as a fallback.
-	// e.g., your API call could be `GET /api/notes?status=archived`
-	let filtered = notes.filter((note) => {
-		if (showDeleted) return note.isDeleted;
-		if (showArchived) return note.isArchived && !note.isDeleted;
-		return !note.isArchived && !note.isDeleted;
-	});
-
-	// Apply the other filters in sequence
-	filtered = searchNotes(filtered, searchQuery);
-	filtered = filterNotesByTags(filtered, selectedTags);
-	filtered = sortNotes(filtered, sortBy, sortOrder);
-
-	return filtered;
-};

@@ -112,30 +112,30 @@ const ListView: React.FC<ListViewProps> = ({
 	}
 
 	return (
-		<div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200/50 shadow-sm overflow-hidden">
+		<div className=" bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-800/50 shadow-sm overflow-hidden">
 			<Table>
 				<TableHeader>
-					<TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
+					<TableRow className="bg-gray-50/50 dark:bg-gray-900/50 hover:bg-gray-50/50 dark:hover:bg-gray-900/50">
 						<TableHead className="w-8 pl-6"></TableHead>
-						<TableHead className="w-[250px] font-semibold text-gray-700">
+						<TableHead className="w-[250px] font-semibold text-gray-700 dark:text-gray-300">
 							Title
 						</TableHead>
-						<TableHead className="w-[300px] font-semibold text-gray-700">
+						<TableHead className="w-[300px] font-semibold text-gray-700 dark:text-gray-300">
 							Content
 						</TableHead>
-						<TableHead className="w-[180px] font-semibold text-gray-700">
+						<TableHead className="w-[180px] font-semibold text-gray-700 dark:text-gray-300">
 							Tags
 						</TableHead>
-						<TableHead className="w-[120px] font-semibold text-gray-700">
+						<TableHead className="w-[120px] font-semibold text-gray-700 dark:text-gray-300">
 							Progress
 						</TableHead>
-						<TableHead className="w-[140px] font-semibold text-gray-700">
+						<TableHead className="w-[140px] font-semibold text-gray-700 dark:text-gray-300">
 							Modified
 						</TableHead>
-						<TableHead className="w-[120px] font-semibold text-gray-700">
+						<TableHead className="w-[120px] font-semibold text-gray-700 dark:text-gray-300">
 							Status
 						</TableHead>
-						<TableHead className="w-[60px] text-right font-semibold text-gray-700 pr-6">
+						<TableHead className="w-[60px] text-right font-semibold text-gray-700 dark:text-gray-300 pr-6">
 							Actions
 						</TableHead>
 					</TableRow>
@@ -144,7 +144,7 @@ const ListView: React.FC<ListViewProps> = ({
 					{notes.map((note) => (
 						<TableRow
 							key={note.id}
-							className="group hover:bg-blue-50/30 transition-all duration-200"
+							className="group hover:bg-blue-50/30 dark:hover:bg-blue-900/20 transition-all duration-200"
 						>
 							<TableCell className="pl-6">
 								{note.isPinned && (
@@ -155,7 +155,7 @@ const ListView: React.FC<ListViewProps> = ({
 							<TableCell className="font-medium">
 								<button
 									onClick={() => onEditNote(note)}
-									className="text-left hover:text-blue-600 transition-colors duration-200 w-full text-gray-900 group-hover:text-blue-700"
+									className="text-left hover:text-blue-600 transition-colors duration-200 w-full text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400"
 									title={note.title}
 								>
 									<div className="max-w-[220px] truncate font-semibold">
@@ -164,13 +164,13 @@ const ListView: React.FC<ListViewProps> = ({
 								</button>
 							</TableCell>
 
-							<TableCell className="text-gray-600 text-sm">
+							<TableCell className="text-gray-600 dark:text-gray-400 text-sm">
 								<div
-									className="max-w-[280px] truncate leading-relaxed"
+									className="max-w-[280px] truncate leading-relaxed text-gray-700 dark:text-gray-300"
 									title={note.content}
 								>
 									{note.content || (
-										<span className="text-gray-400 italic">No content</span>
+										<span className="text-gray-400 dark:text-gray-500 italic">No content</span>
 									)}
 								</div>
 							</TableCell>
@@ -191,14 +191,14 @@ const ListView: React.FC<ListViewProps> = ({
 							<TableCell>
 								{note.checklist.length > 0 ? (
 									<div className="flex items-center gap-3">
-										<div className="flex items-center gap-2 text-sm text-gray-600">
+										<div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
 											<CheckSquare className="w-4 h-4 text-blue-600" />
 											<span className="font-medium">
 												{note.checklist.filter((item) => item.completed).length}
 												/{note.checklist.length}
 											</span>
 										</div>
-										<div className="flex-1 bg-gray-200 rounded-full h-2 max-w-[60px]">
+										<div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 max-w-[60px]">
 											<div
 												className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
 												style={{
@@ -213,12 +213,12 @@ const ListView: React.FC<ListViewProps> = ({
 										</div>
 									</div>
 								) : (
-									<span className="text-gray-400 text-sm">—</span>
+									<span className="text-gray-400 dark:text-gray-500 text-sm">—</span>
 								)}
 							</TableCell>
 
 							<TableCell
-								className="text-sm text-gray-500"
+								className="text-sm text-gray-500 dark:text-gray-400"
 								title={formatFullDateTime(note.updatedAt)}
 							>
 								<div className="flex items-center gap-2">
@@ -249,7 +249,7 @@ const ListView: React.FC<ListViewProps> = ({
 									<DropdownMenuTrigger asChild>
 										<Button
 											variant="ghost"
-											className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-gray-100"
+											className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800"
 										>
 											<span className="sr-only">Open menu</span>
 											<MoreHorizontal className="h-4 w-4" />
@@ -260,7 +260,7 @@ const ListView: React.FC<ListViewProps> = ({
 											<>
 												<DropdownMenuItem
 													onClick={() => onRestoreNote(note.id)}
-													className="text-green-600 hover:text-green-700 hover:bg-green-50"
+													className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/50 dark:text-green-400 dark:hover:text-green-300"
 												>
 													<RotateCcw className="mr-2 h-4 w-4" />
 													<span>Restore Note</span>
@@ -269,7 +269,7 @@ const ListView: React.FC<ListViewProps> = ({
 												<AlertDialog>
 													<AlertDialogTrigger asChild>
 														<DropdownMenuItem
-															className="text-red-600 hover:text-red-700 hover:bg-red-50"
+															className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/50 dark:text-red-400 dark:hover:text-red-300"
 															onClick={(e) => e.preventDefault()}
 														>
 															<Trash2 className="mr-2 h-4 w-4" />
@@ -301,7 +301,7 @@ const ListView: React.FC<ListViewProps> = ({
 											<>
 												<DropdownMenuItem
 													onClick={() => onEditNote(note)}
-													className="hover:bg-blue-50 hover:text-blue-700"
+													className="hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/50 dark:hover:text-blue-400"
 												>
 													<Edit3 className="mr-2 h-4 w-4" />
 													<span>Edit Note</span>
@@ -311,8 +311,8 @@ const ListView: React.FC<ListViewProps> = ({
 													onClick={() => onTogglePin(note.id)}
 													className={`${
 														note.isPinned
-															? "text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
-															: "hover:bg-yellow-50 hover:text-yellow-700"
+															? "text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:text-yellow-300 dark:hover:bg-yellow-900/50"
+															: "hover:bg-yellow-50 hover:text-yellow-700 dark:hover:bg-yellow-900/50 dark:hover:text-yellow-400"
 													}`}
 												>
 													<Pin className="mr-2 h-4 w-4" />
@@ -324,8 +324,8 @@ const ListView: React.FC<ListViewProps> = ({
 													onClick={() => onToggleArchive(note.id)}
 													className={`${
 														note.isArchived
-															? "text-green-600 hover:text-green-700 hover:bg-green-50"
-															: "hover:bg-green-50 hover:text-green-700"
+															? "text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/50"
+															: "hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-900/50 dark:hover:text-green-400"
 													}`}
 												>
 													<Archive className="mr-2 h-4 w-4" />
@@ -336,7 +336,7 @@ const ListView: React.FC<ListViewProps> = ({
 												<DropdownMenuSeparator />
 												<DropdownMenuItem
 													onClick={() => onDeleteNote(note.id)}
-													className="text-red-600 hover:text-red-700 hover:bg-red-50"
+													className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/50 dark:text-red-400 dark:hover:text-red-300"
 												>
 													<Trash2 className="mr-2 h-4 w-4" />
 													<span>Move to Trash</span>
@@ -355,3 +355,4 @@ const ListView: React.FC<ListViewProps> = ({
 };
 
 export default ListView;
+

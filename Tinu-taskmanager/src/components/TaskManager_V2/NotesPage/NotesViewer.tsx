@@ -59,9 +59,9 @@ const NotesViewer = ({
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+		<div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/50">
 			{/* Header */}
-			<div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
+			<div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
 				<div className="max-w-6xl mx-auto px-6 py-4"></div>
 			</div>
 

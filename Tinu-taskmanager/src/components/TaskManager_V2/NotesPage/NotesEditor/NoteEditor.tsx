@@ -24,7 +24,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
 	editingNote,
 	onNoteCreated,
 }) => {
-	const {  createNote, updateNote } = useNotes();
+	const { createNote, updateNote } = useNotes();
 	const { user } = useAuth();
 	const [title, setTitle] = useState("");
 	const [content, setContent] = useState("");
@@ -196,7 +196,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+		<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
 			<NoteHeader
 				onBack={onBack}
 				onSave={() => handleSave(false)}
@@ -213,10 +213,10 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
 						value={title}
 						onChange={(e) => setTitle(e.target.value)}
 						placeholder="Enter note title..."
-						className="text-3xl font-bold border-none bg-transparent placeholder:text-gray-400 focus:ring-0 px-0 py-2 text-gray-900"
+						className="text-3xl font-bold border-none bg-transparent placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-0 px-0 py-2 text-gray-900 dark:text-white"
 					/>
 					{!title.trim() && hasUnsavedChanges && (
-						<div className="flex items-center gap-2 text-amber-600 text-sm">
+						<div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm">
 							<AlertCircle className="w-4 h-4" />
 							<span>Title is required to save the note</span>
 						</div>
@@ -238,7 +238,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
 
 				{/* Content Section */}
 				<div className="space-y-2">
-					<div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+					<div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-3">
 						<FileText className="w-4 h-4" />
 						<span>Content</span>
 					</div>
@@ -247,7 +247,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
 						value={content}
 						onChange={(e) => setContent(e.target.value)}
 						placeholder="Start writing your note... Use the formatting toolbar above to style your text."
-						className="min-h-[400px] bg-white/80 backdrop-blur-sm border-gray-200 resize-none text-base leading-relaxed p-6 rounded-xl shadow-sm focus:shadow-md transition-all duration-200"
+						className="min-h-[200px] bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-700 resize-none text-base leading-relaxed p-6 rounded-xl shadow-sm focus:shadow-md transition-all duration-200 dark:text-white dark:placeholder-gray-400"
 					/>
 				</div>
 
@@ -259,10 +259,10 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
 
 				{/* Save Status */}
 				{hasUnsavedChanges && (
-					<div className="fixed bottom-6 right-6 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg px-4 py-3 shadow-lg">
+					<div className="fixed bottom-6 right-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 shadow-lg">
 						<div className="flex items-center gap-3">
 							<div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
-							<span className="text-sm text-gray-700">Unsaved changes</span>
+							<span className="text-sm text-gray-700 dark:text-gray-300">Unsaved changes</span>
 							<Button
 								size="sm"
 								onClick={() => handleSave(false)}

@@ -66,7 +66,7 @@ export const useUpdateNote = () => {
 			return { previousNotes };
 		},
 		// If the mutation fails, use the context returned from onMutate to roll back
-		onError: (err, newNote, context) => {
+		onError: (_err, _newNote, context) => {
 			if (context?.previousNotes) {
 				queryClient.setQueryData<Note[]>(
 					NOTES_QUERY_KEY,
@@ -105,7 +105,7 @@ export const useSoftDeleteNote = () => {
 			}
 			return { previousNotes };
 		},
-		onError: (err, variables, context) => {
+		onError: (_err, _variables, context) => {
 			context?.previousNotes &&
 				queryClient.setQueryData(NOTES_QUERY_KEY, context.previousNotes);
 		},
@@ -140,7 +140,7 @@ export const useTogglePinNote = () => {
 			}
 			return { previousNotes };
 		},
-		onError: (err, variables, context) => {
+		onError: (_err, _variables, context) => {
 			context?.previousNotes &&
 				queryClient.setQueryData(NOTES_QUERY_KEY, context.previousNotes);
 		},
@@ -171,7 +171,7 @@ export const useToggleArchiveNote = () => {
 			}
 			return { previousNotes };
 		},
-		onError: (err, variables, context) => {
+		onError: (_err, _variables, context) => {
 			context?.previousNotes &&
 				queryClient.setQueryData(NOTES_QUERY_KEY, context.previousNotes);
 		},
@@ -204,7 +204,7 @@ export const useRestoreNote = () => {
 			}
 			return { previousNotes };
 		},
-		onError: (err, variables, context) => {
+		onError: (_err, _variables, context) => {
 			context?.previousNotes &&
 				queryClient.setQueryData(NOTES_QUERY_KEY, context.previousNotes);
 		},
@@ -219,6 +219,60 @@ export const usePermanentlyDeleteNote = () => {
 	return useMutation({
 		mutationFn: notesApi.permanentlyDeleteNoteApi,
 		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+		},
+	});
+};
+
+/**
+ * Hook to toggle a checklist item's completed state with optimistic updates.
+ * The UI updates instantly, and rolls back if the server call fails.
+ */
+export const useToggleChecklistItem = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (variables: {
+			note: Note;
+			itemId: string;
+			checked: boolean;
+			idToken: string;
+			userId: string;
+		}) => {
+			const { note, itemId, checked, idToken, userId } = variables;
+			const updatedChecklist = note.checklist.map((item) =>
+				item.id === itemId ? { ...item, completed: checked } : item
+			);
+			const updatedNote = { ...note, checklist: updatedChecklist };
+			return notesApi.updateNoteApi({ updatedNote, idToken, userId });
+		},
+		onMutate: async (variables) => {
+			await queryClient.cancelQueries({ queryKey: NOTES_QUERY_KEY });
+			const previousNotes = queryClient.getQueryData<Note[]>(NOTES_QUERY_KEY);
+			if (previousNotes) {
+				const updatedChecklist = variables.note.checklist.map((item) =>
+					item.id === variables.itemId
+						? { ...item, completed: variables.checked }
+						: item
+				);
+				const updatedNote = { ...variables.note, checklist: updatedChecklist };
+				queryClient.setQueryData<Note[]>(
+					NOTES_QUERY_KEY,
+					previousNotes.map((note) =>
+						note.id === variables.note.id ? updatedNote : note
+					)
+				);
+			}
+			return { previousNotes };
+		},
+		onError: (_err, _variables, context) => {
+			if (context?.previousNotes) {
+				queryClient.setQueryData<Note[]>(
+					NOTES_QUERY_KEY,
+					context.previousNotes
+				);
+			}
+		},
+		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
 		},
 	});

@@ -276,10 +276,7 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
         email:user?.email,
         name:user?.name,
         // --- ADD THE 'position' PROPERTY HERE ---
-        position:
-          mode === "edit"
-            ? initialTask!.position // If editing, keep the original task's position
-            : maxExistingPosition + 1, // If creating a new task, place it at the end
+        position: initialTask?.position ?? 0,
       };
 
       console.log("Task:", newTask);

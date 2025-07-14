@@ -33,13 +33,15 @@ const awsConfig: ResourcesConfig = {
           redirectSignIn: [
             "http://localhost:5173", // Example for local development
             "https://duousvhu3ksre.cloudfront.net",
-            "https://task-manager-bay-beta.vercel.app"
+            "https://task-manager-bay-beta.vercel.app",
+            "https://www.tinumind.name.ng"
            // Example for production
           ],
           redirectSignOut: [
             "http://localhost:5173",
             "https://duousvhu3ksre.cloudfront.net",
-            "https://task-manager-bay-beta.vercel.app"
+            "https://task-manager-bay-beta.vercel.app",
+            "https://www.tinumind.name.ng"
           ],
           responseType: "code", // Standard for web applications
         },

@@ -93,16 +93,29 @@ const TinuMind: React.FC = () => {
         });
         return;
       }
+
+      const tasksInSameColumn = tasks.filter(
+        (t) => t.status === newTaskFormData.status && !t.archived
+      );
+
+      const minPosition =
+        tasksInSameColumn.length > 0
+          ? Math.min(...tasksInSameColumn.map((t) => t.position ?? 0))
+          : 2.0; // If column is empty, default to 2.0 so new position is 1.0
+
+      const newPosition = minPosition / 2;
+
       // Ensure dates are handled correctly if the form provides strings
       const taskToCreate = {
         ...newTaskFormData,
+        position: newPosition,
         dueDate: newTaskFormData.dueDate
           ? new Date(newTaskFormData.dueDate)
           : new Date(0),
       };
       createTask(taskToCreate);
     },
-    [createTask, user?.sub] // createTask is stable
+    [createTask, user?.sub, tasks] // createTask is stable
   );
 
   const handleTaskClick = useCallback((task: TaskAttributes) => {
@@ -153,7 +166,17 @@ const TinuMind: React.FC = () => {
       const newChecklist = taskToUpdate.checklist?.map((item) =>
         item.id === itemId ? { ...item, completed: checked } : item
       );
-      updateTask({ taskId, updates: { checklist: newChecklist } });
+
+      const allItemsCompleted = newChecklist?.every((item) => item.completed);
+
+      const updates: Partial<TaskAttributes> = { checklist: newChecklist };
+
+      if (allItemsCompleted && taskToUpdate.status !== STATUS_VALUES.COMPLETED) {
+        updates.status = STATUS_VALUES.COMPLETED;
+        updates.completedAt = new Date();
+      }
+
+      updateTask({ taskId, updates });
     },
     [tasks, updateTask, user?.sub] // tasks needed to find current checklist
   );

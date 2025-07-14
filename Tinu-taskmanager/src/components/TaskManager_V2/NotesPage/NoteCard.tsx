@@ -33,6 +33,11 @@ import {
 	DialogTrigger,
 	DialogDescription,
 } from "@/components/ui/dialog";
+import {
+	Tooltip,
+	TooltipTrigger,
+	TooltipContent,
+} from "@/components/ui/tooltip";
 
 interface NoteCardProps {
 	note: Note;
@@ -98,30 +103,45 @@ const NoteCard: React.FC<NoteCardProps> = ({
 					<div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0">
 						{!note.isDeleted && (
 							<>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => onTogglePin(note.id)}
-									className={`p-2 h-auto rounded-lg transition-all duration-200 ${
-										note.isPinned
-											? "text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 bg-yellow-50/50 dark:bg-yellow-900/20"
-											: "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400"
-									}`}
-								>
-									<Pin
-										className={`w-4 h-4 ${note.isPinned ? "fill-current" : ""}`}
-									/>
-								</Button>
-								<Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-									<DialogTrigger asChild>
+								<Tooltip>
+									<TooltipTrigger asChild>
 										<Button
 											variant="ghost"
 											size="sm"
-											className="p-2 h-auto rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200"
+											onClick={() => onTogglePin(note.id)}
+											className={`p-2 h-auto rounded-lg transition-all duration-200 ${
+												note.isPinned
+													? "text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 bg-yellow-50/50 dark:bg-yellow-900/20"
+													: "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400"
+											}`}
 										>
-											<Eye className="w-4 h-4" />
+											<Pin
+												className={`w-4 h-4 ${
+													note.isPinned ? "fill-current" : ""
+												}`}
+											/>
 										</Button>
-									</DialogTrigger>
+									</TooltipTrigger>
+									<TooltipContent>Pin note</TooltipContent>
+								</Tooltip>
+								<Dialog
+									open={isViewModalOpen}
+									onOpenChange={setIsViewModalOpen}
+								>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<DialogTrigger asChild>
+												<Button
+													variant="ghost"
+													size="sm"
+													className="p-2 h-auto rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200"
+												>
+													<Eye className="w-4 h-4" />
+												</Button>
+											</DialogTrigger>
+										</TooltipTrigger>
+										<TooltipContent>View note</TooltipContent>
+									</Tooltip>
 									<DialogContent className="sm:max-w-[600px] bg-white/90 dark:bg-gray-900/90 backdrop-blur-md">
 										<DialogHeader>
 											<DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -170,34 +190,51 @@ const NoteCard: React.FC<NoteCardProps> = ({
 										</div>
 									</DialogContent>
 								</Dialog>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => onEditNote(note)}
-									className="p-2 h-auto rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200"
-								>
-									<Edit3 className="w-4 h-4" />
-								</Button>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => onToggleArchive(note.id)}
-									className={`p-2 h-auto rounded-lg  transition-all duration-200 ${
-										note.isArchived
-											? "text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50 bg-green-50/50 dark:bg-green-900/20"
-											: "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
-									}`}
-								>
-									<Archive className="w-4 h-4" />
-								</Button>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => onEditNote(note)}
+											className="p-2 h-auto rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200"
+										>
+											<Edit3 className="w-4 h-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>Edit note</TooltipContent>
+								</Tooltip>
+
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => onToggleArchive(note.id)}
+											className={`p-2 h-auto rounded-lg  transition-all duration-200 ${
+												note.isArchived
+													? "text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50 bg-green-50/50 dark:bg-green-900/20"
+													: "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+											}`}
+										>
+											<Archive className="w-4 h-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>Archive note</TooltipContent>
+								</Tooltip>
+
+							    <Tooltip>
+									<TooltipTrigger asChild>
 								<Button
 									variant="ghost"
 									size="sm"
 									onClick={() => onDeleteNote(note.id)}
 									className="p-2 h-auto rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
 								>
-									<Trash2 className="w-4 h-4" />
-								</Button>
+											<Trash2 className="w-4 h-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>Delete note</TooltipContent>
+								</Tooltip>
 							</>
 						)}
 						{note.isDeleted && (
@@ -311,7 +348,7 @@ const NoteCard: React.FC<NoteCardProps> = ({
 												: "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
 										}`}
 										onClick={(e) => {
-											e.stopPropagation(); 
+											e.stopPropagation();
 											if (!note.isDeleted && onToggleChecklist) {
 												onToggleChecklist(note.id, item.id, !item.completed);
 											}

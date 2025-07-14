@@ -45,7 +45,7 @@ const formSchema = z.object({
   .string()
   .trim()
   .min(5, "Feedback must be at least 5 characters")
-  .max(200, "Feedback must be no more than 200 characters"),
+  .max(1000, "Feedback must be no more than 1000 characters"),
 
   feedbackType: z.enum(["suggestion", "bug", "feature"]),
   visibilityType: z.enum(["public", "private"]),
@@ -57,7 +57,7 @@ type VisibilityType = "public" | "private";
 const defaultFeedbackFormData = {
   feedback: "",
   feedbackType: "" as FeedbackType | "",
-  visibilityType: "" as VisibilityType | "",
+  visibilityType: "public" 
 };
 
 const feedbackTypes = [

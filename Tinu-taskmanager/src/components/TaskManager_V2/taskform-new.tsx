@@ -31,7 +31,6 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/Context/AuthContext";
 import { TagSelector } from "./TagSelector";
 import CustomToast from "@/components/TaskManager_V2/Alerts/Custom-toast";
-import { useTasksData } from "@/hooks/useTaskQueries";
 
 // Zod Schema for task input
 const taskInputSchema = z.object({

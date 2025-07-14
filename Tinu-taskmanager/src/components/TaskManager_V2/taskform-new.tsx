@@ -102,10 +102,6 @@ const NewTaskForm: React.FC<TaskFormProps> = ({
 
   const { tags } = useTags();
   const [loading, setLoading] = useState(false);
-  const { tasks } = useTasksData();
-
-  const maxExistingPosition =
-    tasks.length > 0 ? Math.max(...tasks.map((t) => t.position ?? 0)) : 0;
 
   const {
     register,

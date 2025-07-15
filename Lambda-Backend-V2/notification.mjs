@@ -134,7 +134,7 @@ export async function handler(event) {
 
         try {
           const result = await resend.emails.send({
-            from: "TinuMind <noreply@tinumind.baymufy.com>",
+            from: "TinuMind <noreply@reminder.tinumind.name.ng>",
             to: [user.email],
             subject: "📋 Your TinuMind Task Summary",
             html: personalizedHtml,

@@ -2,10 +2,10 @@ import { MongoClient } from "mongodb";
 import { Resend } from "resend";
 import fs from "fs/promises";
 import path from "path";
-import { DateTime } from 'luxon';
+import { DateTime } from "luxon";
 
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,165 +15,377 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const client = new MongoClient(process.env.MONGODB_URI);
 let db;
 
-const LOGO_URL = "https://assets.unlayer.com/projects/274958/1749390508668-966247.png";
+const LOGO_URL =
+	"https://assets.unlayer.com/projects/274958/1749390508668-966247.png";
 const APP_NAME = "TinuMind";
 
 let emailTemplateHtml = null;
 
-// Function to capitalize the first letter of each word in a string
 function toTitleCase(str) {
-    if (!str) return '';
-    return str.replace(/\w\S*/g, function(txt){
-        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-    });
+	if (!str) return "";
+	return str.replace(
+		/\w\S*/g,
+		(txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+	);
+}
+
+// NEW: Helper function to generate an HTML list from tasks
+function generateTaskListHtml(tasks, emptyMessage) {
+	if (!tasks || tasks.length === 0) {
+		return `<p style="margin: 0; padding-left: 20px;"><em>${emptyMessage}</em></p>`;
+	}
+	const listItems = tasks
+		.map((task) => `<li style="margin-bottom: 5px;">${task.task}</li>`)
+		.join("");
+	return `<ul style="margin-top: 10px; margin-bottom: 20px; padding-left: 20px;">${listItems}</ul>`;
 }
 
 export async function handler(event) {
-  console.log("Lambda function started");
+	console.log("Lambda function started");
 
-  try {
-    if (!db) {
-      console.log("Connecting to MongoDB...");
-      await client.connect();
-      db = client.db(process.env.DB_NAME || "TinumindDB");
-      console.log("Connected to MongoDB");
-    }
+	try {
+		if (!db) {
+			console.log("Connecting to MongoDB...");
+			await client.connect();
+			db = client.db(process.env.DB_NAME || "TinumindDB");
+			console.log("Connected to MongoDB");
+		}
 
-    const tasksCollection = db.collection("Tasks");
-    console.log("Accessing Tasks collection");
+		const tasksCollection = db.collection("Tasks");
+		console.log("Accessing Tasks collection");
 
-    console.log("Fetching distinct users...");
-    const users = await tasksCollection
-      .aggregate([
-        {
-          $match: {
-            email: { $exists: true, $ne: null },
-            name: { $exists: true, $ne: null }
-          }
-        },
-        {
-          $group: {
-            _id: "$userId",
-            email: { $first: "$email" },
-            name: { $first: "$name" },
-            // timezone: { $first: "$timezone" } // Uncomment if you store timezone per user
-          },
-        },
-      ])
-      .toArray();
+		const users = await tasksCollection
+			.aggregate([
+				{
+					$match: {
+						email: { $exists: true, $ne: null },
+						name: { $exists: true, $ne: null },
+					},
+				},
+				{
+					$group: {
+						_id: "$userId",
+						email: { $first: "$email" },
+						name: { $first: "$name" },
+					},
+				},
+			])
+			.toArray();
 
-    console.log(`Found ${users.length} users`);
+		console.log(`Found ${users.length} users`);
 
-    if (!emailTemplateHtml) {
-        const templatePath = path.join(__dirname, 'email.html');
-        emailTemplateHtml = await fs.readFile(templatePath, 'utf8');
-        console.log("Email template loaded from file.");
-    }
+		if (!emailTemplateHtml) {
+			const templatePath = path.join(__dirname, "email-notification.html");
+			emailTemplateHtml = await fs.readFile(templatePath, "utf8");
+			console.log("Email template loaded from file.");
+		}
 
-    for (const user of users) {
-      if (!user.email || !user.name) {
-          console.warn(`Skipping user with _id: ${user._id} due to missing email or name after aggregation.`);
-          continue;
-      }
-      console.log(`Processing user: ${user.name} (${user.email})`);
+		for (const user of users) {
+			if (!user.email || !user.name) {
+				console.warn(
+					`Skipping user with _id: ${user._id} due to missing email or name.`
+				);
+				continue;
+			}
+			console.log(`Processing user: ${user.name} (${user.email})`);
 
-      const userTimezone = user.timezone || 'Africa/Lagos';
+			const userTimezone = user.timezone || "Africa/Lagos";
+			const nowInUserTimezone = DateTime.now().setZone(userTimezone);
 
-      const nowInUserTimezone = DateTime.now().setZone(userTimezone);
-      console.log(`Current time in user's timezone (${userTimezone}): ${nowInUserTimezone.toISO()}`);
+			const startOfTodayUTC = nowInUserTimezone.startOf("day").toJSDate();
+			const endOfTodayUTC = nowInUserTimezone.endOf("day").toJSDate();
+			const startOfWeekUTC = nowInUserTimezone.startOf("week").toJSDate();
+			const endOfWeekUTC = nowInUserTimezone.endOf("week").toJSDate();
+			const startOfMonthUTC = nowInUserTimezone.startOf("month").toJSDate();
+			const endOfMonthUTC = nowInUserTimezone.endOf("month").toJSDate();
 
-      const startOfTodayUTC = nowInUserTimezone.startOf('day').toJSDate();
-      const endOfTodayUTC = nowInUserTimezone.endOf('day').toJSDate();
+			// MODIFIED: Run queries for both counts and task lists in parallel
+			const [
+				[todayCount, weekCount, monthCount],
+				[tasksForToday, tasksForThisWeek, tasksForThisMonth],
+			] = await Promise.all([
+				// Promise for getting total counts (your original logic)
+				Promise.all([
+					tasksCollection.countDocuments({
+						userId: user._id,
+						dueDate: { $gte: startOfTodayUTC, $lte: endOfTodayUTC },
+						status: { $ne: "Completed" },
+					}),
+					tasksCollection.countDocuments({
+						userId: user._id,
+						dueDate: { $gte: startOfWeekUTC, $lte: endOfWeekUTC },
+						status: { $ne: "Completed" },
+					}),
+					tasksCollection.countDocuments({
+						userId: user._id,
+						dueDate: { $gte: startOfMonthUTC, $lte: endOfMonthUTC },
+						status: { $ne: "Completed" },
+					}),
+				]),
+				// Promise for getting sample task lists (the new logic)
+				Promise.all([
+					tasksCollection
+						.find({
+							userId: user._id,
+							dueDate: { $gte: startOfTodayUTC, $lte: endOfTodayUTC },
+							status: { $ne: "Completed" },
+						})
+						.limit(5)
+						.toArray(),
+					tasksCollection
+						.find({
+							userId: user._id,
+							dueDate: { $gte: startOfWeekUTC, $lte: endOfWeekUTC },
+							status: { $ne: "Completed" },
+						})
+						.limit(5)
+						.toArray(),
+					tasksCollection
+						.find({
+							userId: user._id,
+							dueDate: { $gte: startOfMonthUTC, $lte: endOfMonthUTC },
+							status: { $ne: "Completed" },
+						})
+						.limit(5)
+						.toArray(),
+				]),
+			]);
 
-      const startOfWeekUTC = nowInUserTimezone.startOf('week').toJSDate();
-      const endOfWeekUTC = nowInUserTimezone.endOf('week').toJSDate();
+			console.log(
+				`Counts for ${user.email} - Today: ${todayCount}, Week: ${weekCount}, Month: ${monthCount}`
+			);
 
-      const startOfMonthUTC = nowInUserTimezone.startOf('month').toJSDate();
-      const endOfMonthUTC = nowInUserTimezone.endOf('month').toJSDate();
+			// NEW: Generate HTML for each task list
+			const todayTasksHtml = generateTaskListHtml(
+				tasksForToday,
+				"No tasks due today. Great job!"
+			);
+			const weekTasksHtml = generateTaskListHtml(
+				tasksForThisWeek,
+				"No tasks due this week."
+			);
+			const monthTasksHtml = generateTaskListHtml(
+				tasksForThisMonth,
+				"No tasks due this month."
+			);
 
-      console.log(`Query Ranges for ${user.name}:`);
-      console.log(`  Today: ${startOfTodayUTC.toISOString()} to ${endOfTodayUTC.toISOString()}`);
-      console.log(`  Week: ${startOfWeekUTC.toISOString()} to ${endOfWeekUTC.toISOString()}`);
-      console.log(`  Month: ${startOfMonthUTC.toISOString()} to ${endOfMonthUTC.toISOString()}`);
+			if (user.email) {
+				console.log(`Attempting to send email to ${user.email}...`);
+				const currentYear = new Date().getFullYear();
 
-      const [todayCount, weekCount, monthCount] = await Promise.all([
-        tasksCollection.countDocuments({
-          userId: user._id,
-          dueDate: { $gte: startOfTodayUTC, $lte: endOfTodayUTC },
-          status: { $ne: "Completed" }
-        }),
-        tasksCollection.countDocuments({
-          userId: user._id,
-          dueDate: { $gte: startOfWeekUTC, $lte: endOfWeekUTC },
-          status: { $ne: "Completed" }
-        }),
-        tasksCollection.countDocuments({
-          userId: user._id,
-          dueDate: { $gte: startOfMonthUTC, $lte: endOfMonthUTC },
-          status: { $ne: "Completed" }
-        }),
-      ]);
+        // Calculate TOTAL_COUNT here before using it
+        const totalCount = todayCount + weekCount + monthCount; // Assuming this is how you define total
 
-      console.log(
-        `Counts for ${user.email} - Today: ${todayCount}, Week: ${weekCount}, Month: ${monthCount}`
-      );
+				// MODIFIED: Replace all placeholders
+				let personalizedHtml = emailTemplateHtml
+          .replace(/{{LOGO_URL}}/g, LOGO_URL) // Use /g for all if they can appear multiple times
+          .replace(/{{USER_NAME}}/g, toTitleCase(user.name || "there"))
+          .replace(/{{TODAY_COUNT}}/g, todayCount.toString()) // <-- FIXED: Added /g and .toString()
+          .replace(/{{WEEK_COUNT}}/g, weekCount.toString())   // <-- FIXED: Added /g and .toString()
+          .replace(/{{MONTH_COUNT}}/g, monthCount.toString()) // <-- FIXED: Added /g and .toString()
+          .replace(/{{TOTAL_COUNT}}/g, totalCount.toString()) // <-- NEW/FIXED: Added /g and .toString() and ensure `totalCount` is defined
+          .replace(/{{TODAY_TASKS_LIST}}/g, todayTasksHtml) // Added /g for consistency, though likely only one occurrence
+          .replace(/{{WEEK_TASKS_LIST}}/g, weekTasksHtml)   // Added /g for consistency
+          .replace(/{{MONTH_TASKS_LIST}}/g, monthTasksHtml) // Added /g for consistency
+          .replace(/{{APP_NAME}}/g, APP_NAME)
+          .replace(/{{CURRENT_YEAR}}/g, currentYear.toString()); // Added /g and .toString()
 
-      if (user.email) {
-        console.log(`Attempting to send email to ${user.email}...`);
 
-        const currentYear = new Date().getFullYear();
+				try {
+					const result = await resend.emails.send({
+						from: "TinuMind <noreply@reminder.tinumind.name.ng>",
+						to: [user.email],
+						subject: "📋 Your TinuMind Task Summary",
+						html: personalizedHtml,
+						text: `Hi ${toTitleCase(
+							user.name || "there"
+						)},\n\nHere's your task summary:\n\n🗓️ Today: ${todayCount}\n📅 This Week: ${weekCount}\n🗂️ This Month: ${monthCount}\n\nKeep up the great work!\n\n- The TinuMind Team`,
+					});
+					console.log(`Email sent successfully to ${user.email}:`, result.id);
+				} catch (emailError) {
+					console.error(`Failed to send email to ${user.email}:`, emailError);
+				}
+			}
+		}
 
-        let personalizedHtml = emailTemplateHtml
-            .replace("{{LOGO_URL}}", LOGO_URL)
-            .replace("{{USER_NAME}}", toTitleCase(user.name || "there")) // Applying title case here
-            .replace("{{TODAY_COUNT}}", todayCount)
-            .replace("{{WEEK_COUNT}}", weekCount)
-            .replace("{{MONTH_COUNT}}", monthCount)
-            .replace(/{{APP_NAME}}/g, APP_NAME)
-            .replace("{{CURRENT_YEAR}}", currentYear);
-
-        try {
-          const result = await resend.emails.send({
-            from: "TinuMind <noreply@reminder.tinumind.name.ng>",
-            to: [user.email],
-            subject: "📋 Your TinuMind Task Summary",
-            html: personalizedHtml,
-            text: `Hi ${toTitleCase(user.name || "there")},\n\nHere's your task summary:\n\n🗓️ Today: ${todayCount}\n📅 This Week: ${weekCount}\n🗂️ This Month: ${monthCount}\n\nKeep up the great work!\n\n- The TinuMind Team`,
-          });
-          console.log(`Email sent successfully to ${user.email}:`, result.id);
-        } catch (emailError) {
-          console.error(`Failed to send email to ${user.email}:`, emailError);
-        }
-      }
-    }
-
-    console.log("All email attempts completed.");
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: "Task summaries sending process completed." }),
-    };
-  } catch (err) {
-    console.error("Error occurred in Lambda:", err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message || "Internal server error" }),
-    };
-  }
+		console.log("All email attempts completed.");
+		return {
+			statusCode: 200,
+			body: JSON.stringify({
+				message: "Task summaries sending process completed.",
+			}),
+		};
+	} catch (err) {
+		console.error("Error occurred in Lambda:", err);
+		return {
+			statusCode: 500,
+			body: JSON.stringify({ error: err.message || "Internal server error" }),
+		};
+	}
 }
 
+// import { MongoClient } from "mongodb";
+// import { Resend } from "resend";
+// import fs from "fs/promises";
+// import path from "path";
+// import { DateTime } from 'luxon';
 
+// import { fileURLToPath } from 'url';
+// import { dirname } from 'path';
 
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
 
+// const resend = new Resend(process.env.RESEND_API_KEY);
 
+// const client = new MongoClient(process.env.MONGODB_URI);
+// let db;
 
+// const LOGO_URL = "https://assets.unlayer.com/projects/274958/1749390508668-966247.png";
+// const APP_NAME = "TinuMind";
 
+// let emailTemplateHtml = null;
 
+// // Function to capitalize the first letter of each word in a string
+// function toTitleCase(str) {
+//     if (!str) return '';
+//     return str.replace(/\w\S*/g, function(txt){
+//         return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+//     });
+// }
 
+// export async function handler(event) {
+//   console.log("Lambda function started");
 
+//   try {
+//     if (!db) {
+//       console.log("Connecting to MongoDB...");
+//       await client.connect();
+//       db = client.db(process.env.DB_NAME || "TinumindDB");
+//       console.log("Connected to MongoDB");
+//     }
 
+//     const tasksCollection = db.collection("Tasks");
+//     console.log("Accessing Tasks collection");
 
+//     console.log("Fetching distinct users...");
+//     const users = await tasksCollection
+//       .aggregate([
+//         {
+//           $match: {
+//             email: { $exists: true, $ne: null },
+//             name: { $exists: true, $ne: null }
+//           }
+//         },
+//         {
+//           $group: {
+//             _id: "$userId",
+//             email: { $first: "$email" },
+//             name: { $first: "$name" },
+//             // timezone: { $first: "$timezone" } // Uncomment if you store timezone per user
+//           },
+//         },
+//       ])
+//       .toArray();
 
+//     console.log(`Found ${users.length} users`);
 
+//     if (!emailTemplateHtml) {
+//         const templatePath = path.join(__dirname, 'email.html');
+//         emailTemplateHtml = await fs.readFile(templatePath, 'utf8');
+//         console.log("Email template loaded from file.");
+//     }
+
+//     for (const user of users) {
+//       if (!user.email || !user.name) {
+//           console.warn(`Skipping user with _id: ${user._id} due to missing email or name after aggregation.`);
+//           continue;
+//       }
+//       console.log(`Processing user: ${user.name} (${user.email})`);
+
+//       const userTimezone = user.timezone || 'Africa/Lagos';
+
+//       const nowInUserTimezone = DateTime.now().setZone(userTimezone);
+//       console.log(`Current time in user's timezone (${userTimezone}): ${nowInUserTimezone.toISO()}`);
+
+//       const startOfTodayUTC = nowInUserTimezone.startOf('day').toJSDate();
+//       const endOfTodayUTC = nowInUserTimezone.endOf('day').toJSDate();
+
+//       const startOfWeekUTC = nowInUserTimezone.startOf('week').toJSDate();
+//       const endOfWeekUTC = nowInUserTimezone.endOf('week').toJSDate();
+
+//       const startOfMonthUTC = nowInUserTimezone.startOf('month').toJSDate();
+//       const endOfMonthUTC = nowInUserTimezone.endOf('month').toJSDate();
+
+//       console.log(`Query Ranges for ${user.name}:`);
+//       console.log(`  Today: ${startOfTodayUTC.toISOString()} to ${endOfTodayUTC.toISOString()}`);
+//       console.log(`  Week: ${startOfWeekUTC.toISOString()} to ${endOfWeekUTC.toISOString()}`);
+//       console.log(`  Month: ${startOfMonthUTC.toISOString()} to ${endOfMonthUTC.toISOString()}`);
+
+//       const [todayCount, weekCount, monthCount] = await Promise.all([
+//         tasksCollection.countDocuments({
+//           userId: user._id,
+//           dueDate: { $gte: startOfTodayUTC, $lte: endOfTodayUTC },
+//           status: { $ne: "Completed" }
+//         }),
+//         tasksCollection.countDocuments({
+//           userId: user._id,
+//           dueDate: { $gte: startOfWeekUTC, $lte: endOfWeekUTC },
+//           status: { $ne: "Completed" }
+//         }),
+//         tasksCollection.countDocuments({
+//           userId: user._id,
+//           dueDate: { $gte: startOfMonthUTC, $lte: endOfMonthUTC },
+//           status: { $ne: "Completed" }
+//         }),
+//       ]);
+
+//       console.log(
+//         `Counts for ${user.email} - Today: ${todayCount}, Week: ${weekCount}, Month: ${monthCount}`
+//       );
+
+//       if (user.email) {
+//         console.log(`Attempting to send email to ${user.email}...`);
+
+//         const currentYear = new Date().getFullYear();
+
+//         let personalizedHtml = emailTemplateHtml
+//             .replace("{{LOGO_URL}}", LOGO_URL)
+//             .replace("{{USER_NAME}}", toTitleCase(user.name || "there")) // Applying title case here
+//             .replace("{{TODAY_COUNT}}", todayCount)
+//             .replace("{{WEEK_COUNT}}", weekCount)
+//             .replace("{{MONTH_COUNT}}", monthCount)
+//             .replace(/{{APP_NAME}}/g, APP_NAME)
+//             .replace("{{CURRENT_YEAR}}", currentYear);
+
+//         try {
+//           const result = await resend.emails.send({
+//             from: "TinuMind <noreply@reminder.tinumind.name.ng>",
+//             to: [user.email],
+//             subject: "📋 Your TinuMind Task Summary",
+//             html: personalizedHtml,
+//             text: `Hi ${toTitleCase(user.name || "there")},\n\nHere's your task summary:\n\n🗓️ Today: ${todayCount}\n📅 This Week: ${weekCount}\n🗂️ This Month: ${monthCount}\n\nKeep up the great work!\n\n- The TinuMind Team`,
+//           });
+//           console.log(`Email sent successfully to ${user.email}:`, result.id);
+//         } catch (emailError) {
+//           console.error(`Failed to send email to ${user.email}:`, emailError);
+//         }
+//       }
+//     }
+
+//     console.log("All email attempts completed.");
+//     return {
+//       statusCode: 200,
+//       body: JSON.stringify({ message: "Task summaries sending process completed." }),
+//     };
+//   } catch (err) {
+//     console.error("Error occurred in Lambda:", err);
+//     return {
+//       statusCode: 500,
+//       body: JSON.stringify({ error: err.message || "Internal server error" }),
+//     };
+//   }
+// }
 
 // import { MongoClient } from "mongodb";
 // import { Resend } from "resend";
@@ -351,21 +563,6 @@ export async function handler(event) {
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // import { MongoClient } from "mongodb";
 // import { Resend } from "resend";
 // import fs from "fs/promises";
@@ -449,7 +646,6 @@ export async function handler(event) {
 
 //       const nowInUserTimezone = DateTime.now().setZone(userTimezone);
 //       console.log(`Current time in user's timezone (${userTimezone}): ${nowInUserTimezone.toISO()}`);
-
 
 //       // Start of Today in User's Timezone, converted to UTC
 //       const startOfTodayUTC = nowInUserTimezone.startOf('day').toJSDate();
@@ -536,20 +732,10 @@ export async function handler(event) {
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
 // import { MongoClient } from "mongodb";
 // import { Resend } from "resend";
 // import fs from "fs/promises"; // For asynchronous file operations
 // import path from "path";      // For path manipulation utilities
-
 
 // import { fileURLToPath } from 'url';
 // import { dirname } from 'path';
@@ -561,10 +747,8 @@ export async function handler(event) {
 
 // const resend = new Resend(process.env.RESEND_API_KEY);
 
-
 // const client = new MongoClient(process.env.MONGODB_URI);
 // let db; // Variable to store the MongoDB database connection
-
 
 // const LOGO_URL = "https://assets.unlayer.com/projects/274958/1749390508668-966247.png";
 // // Define your application name. This will be used in the email footer.
@@ -721,27 +905,6 @@ export async function handler(event) {
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // import { MongoClient } from "mongodb";
 // import { Resend } from "resend";
 // import { fileURLToPath } from 'url';
@@ -872,7 +1035,6 @@ export async function handler(event) {
 //             .replace(/{{APP_NAME}}/g, APP_NAME) // Use /g for global replacement for APP_NAME
 //             .replace("{{CURRENT_YEAR}}", currentYear);
 
-
 //         try {
 //           const result = await resend.emails.send({
 //             from: "TinuMind <noreply@tinumind.baymufy.com>",
@@ -901,23 +1063,6 @@ export async function handler(event) {
 //     };
 //   }
 // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import { MongoClient } from "mongodb";
 // import { Resend } from "resend";
@@ -1058,42 +1203,6 @@ export async function handler(event) {
 //       // }
 //   }
 // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import { MongoClient } from "mongodb";
 // import { Resend } from "resend";

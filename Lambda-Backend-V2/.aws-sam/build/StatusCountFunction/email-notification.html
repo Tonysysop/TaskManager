@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Task Reminder Email Template</title>
+		<style>
+			body {
+				margin: 0;
+				padding: 20px;
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+					sans-serif;
+				background-color: #f5f5f5;
+			}
+			.preview-container {
+				max-width: 800px;
+				margin: 0 auto;
+				background: white;
+				border-radius: 8px;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+				overflow: hidden;
+			}
+			.preview-header {
+				background: #2563eb;
+				color: white;
+				padding: 20px;
+				text-align: center;
+			}
+			.email-preview {
+				padding: 20px;
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Email Template Starts Here -->
+		<table
+			width="100%"
+			cellpadding="0"
+			cellspacing="0"
+			border="0"
+			style="
+				max-width: 600px;
+				margin: 0 auto;
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+					Oxygen, Ubuntu, Cantarell, sans-serif;
+			"
+		>
+			<!-- Header -->
+			<tr>
+				<td
+					style="
+						background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+						padding: 30px 20px;
+						text-align: center;
+					"
+				>
+					<!-- Logo -->
+					<div style="margin-bottom: 15px">
+						<img
+							src="{{logo_url}}"
+							alt="Tinumind Logo"
+							style="height: 40px; width: auto"
+						/>
+					</div>
+
+					<!-- App Name -->
+					<div
+						style="
+							color: #e0e7ff;
+							font-size: 14px;
+							font-weight: 500;
+							margin-bottom: 8px;
+							letter-spacing: 0.5px;
+						"
+					>
+						TINUMIND
+					</div>
+					<h1
+						style="color: white; margin: 0; font-size: 28px; font-weight: 600"
+					>
+						Task Reminder
+					</h1>
+					<p style="color: #e0e7ff; margin: 8px 0 0 0; font-size: 16px">
+						Stay on top of your tasks
+					</p>
+				</td>
+			</tr>
+
+			<!-- Main Content -->
+			<tr>
+				<td style="background-color: #ffffff; padding: 30px 20px">
+					<!-- Greeting -->
+					<p
+						style="
+							color: #374151;
+							font-size: 16px;
+							line-height: 1.6;
+							margin: 0 0 25px 0;
+						"
+					>
+						Hi {{USER_NAME}} 👋<br />
+						Here's a summary of your upcoming tasks to help you stay organized.
+					</p>
+
+					<!-- Tasks Due Today -->
+					<table
+						width="100%"
+						cellpadding="0"
+						cellspacing="0"
+						border="0"
+						style="margin-bottom: 25px"
+					>
+						<tr>
+							<td
+								style="
+									background-color: #fef2f2;
+									border-left: 4px solid #dc2626;
+									padding: 20px;
+									border-radius: 8px;
+								"
+							>
+								<h2
+									style="
+										color: #dc2626;
+										margin: 0 0 15px 0;
+										font-size: 20px;
+										font-weight: 600;
+									"
+								>
+									🔥 Due Today ({{TODAY_COUNT}} tasks)
+								</h2>
+
+								{{TODAY_TASKS_LIST}}
+							</td>
+						</tr>
+					</table>
+
+					<!-- Tasks Due This Week -->
+					<table
+						width="100%"
+						cellpadding="0"
+						cellspacing="0"
+						border="0"
+						style="margin-bottom: 25px"
+					>
+						<tr>
+							<td
+								style="
+									background-color: #fefbeb;
+									border-left: 4px solid #f59e0b;
+									padding: 20px;
+									border-radius: 8px;
+								"
+							>
+								<h2
+									style="
+										color: #f59e0b;
+										margin: 0 0 15px 0;
+										font-size: 20px;
+										font-weight: 600;
+									"
+								>
+									📅 Due This Week ({{WEEK_COUNT}} tasks)
+								</h2>
+
+								{{WEEK_TASKS_LIST}}
+							</td>
+						</tr>
+					</table>
+
+					<!-- Tasks Due This Month -->
+					<table
+						width="100%"
+						cellpadding="0"
+						cellspacing="0"
+						border="0"
+						style="margin-bottom: 30px"
+					>
+						<tr>
+							<td
+								style="
+									background-color: #f0f9ff;
+									border-left: 4px solid #0ea5e9;
+									padding: 20px;
+									border-radius: 8px;
+								"
+							>
+								<h2
+									style="
+										color: #0ea5e9;
+										margin: 0 0 15px 0;
+										font-size: 20px;
+										font-weight: 600;
+									"
+								>
+									📋 Due This Month ({{MONTH_COUNT}} tasks)
+								</h2>
+
+								{{MONTH_TASKS_LIST}}
+							</td>
+						</tr>
+					</table>
+
+					<!-- Summary Stats -->
+					<table
+						width="100%"
+						cellpadding="0"
+						cellspacing="0"
+						border="0"
+						style="
+							background-color: #f9fafb;
+							border-radius: 8px;
+							margin-bottom: 25px;
+						"
+					>
+						<tr>
+							<td style="padding: 20px; text-align: center">
+								<h3
+									style="
+										color: #374151;
+										margin: 0 0 15px 0;
+										font-size: 18px;
+										font-weight: 600;
+									"
+								>
+									📊 Quick Summary
+								</h3>
+								<table width="100%" cellpadding="0" cellspacing="0" border="0">
+									<tr>
+										<td style="text-align: center; padding: 10px">
+											<div
+												style="
+													color: #dc2626;
+													font-size: 24px;
+													font-weight: 700;
+												"
+											>
+												{{TODAY_COUNT}}
+											</div>
+											<div style="color: #6b7280; font-size: 14px">
+												Due Today
+											</div>
+										</td>
+										<td style="text-align: center; padding: 10px">
+											<div
+												style="
+													color: #f59e0b;
+													font-size: 24px;
+													font-weight: 700;
+												"
+											>
+												{{WEEK_COUNT}}
+											</div>
+											<div style="color: #6b7280; font-size: 14px">
+												This Week
+											</div>
+										</td>
+										<td style="text-align: center; padding: 10px">
+											<div
+												style="
+													color: #0ea5e9;
+													font-size: 24px;
+													font-weight: 700;
+												"
+											>
+												{{MONTH_COUNT}}
+											</div>
+											<div style="color: #6b7280; font-size: 14px">
+												This Month
+											</div>
+										</td>
+										<td style="text-align: center; padding: 10px">
+											<div
+												style="
+													color: #16a34a;
+													font-size: 24px;
+													font-weight: 700;
+												"
+											>
+												{{TOTAL_COUNT}}
+											</div>
+											<div style="color: #6b7280; font-size: 14px">
+												Total Tasks
+											</div>
+										</td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+					</table>
+
+					<!-- Call to Action -->
+					<table
+						width="100%"
+						cellpadding="0"
+						cellspacing="0"
+						border="0"
+						style="text-align: center; margin-bottom: 20px"
+					>
+						<tr>
+							<td>
+								<a
+									href="tinumind.name.ng"
+									style="
+										display: inline-block;
+										background-color: #2563eb;
+										color: white;
+										padding: 14px 28px;
+										text-decoration: none;
+										border-radius: 8px;
+										font-weight: 600;
+										font-size: 16px;
+									"
+									>View All Tasks</a
+								>
+							</td>
+						</tr>
+					</table>
+
+					<!-- Closing Message -->
+					<p
+						style="
+							color: #6b7280;
+							font-size: 14px;
+							line-height: 1.6;
+							margin: 0;
+							text-align: center;
+						"
+					>
+						Stay productive and keep up the great work! 💪<br />
+						Need help managing your tasks?
+						<a
+							href="mrtonero4@gmail.com"
+							style="color: #2563eb; text-decoration: none"
+							>Contact support</a
+						>
+					</p>
+				</td>
+			</tr>
+
+			<!-- Footer -->
+			<tr>
+				<td
+					style="
+						background-color: #f9fafb;
+						padding: 20px;
+						text-align: center;
+						border-top: 1px solid #e5e7eb;
+					"
+				>
+					<p style="color: #6b7280; font-size: 12px; margin: 0 0 8px 0">
+						You're receiving this because you have tasks due soon.
+					</p>
+					<p style="color: #6b7280; font-size: 12px; margin: 0">
+						<a href="#" style="color: #6b7280; text-decoration: none"
+							>Unsubscribe</a
+						>
+						|
+						<a href="#" style="color: #6b7280; text-decoration: none"
+							>Update preferences</a
+						>
+						|
+						<a href="#" style="color: #6b7280; text-decoration: none"
+							>View in browser</a
+						>
+					</p>
+				</td>
+			</tr>
+		</table>
+		<!-- Email Template Ends Here -->
+	</body>
+</html>
